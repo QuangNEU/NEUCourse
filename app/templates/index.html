@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEU Course - Hệ thống Quản lý Đề cương</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        /* Tùy chỉnh màu sắc thương hiệu NEU (Xanh dương đậm) */
+        :root {
+            --neu-blue: #00305b;
+            --neu-light-blue: #0056a4;
+        }
+
+        body { background-color: #f8f9fa; }
+
+        /* Khu vực Hero (Chứa ô tìm kiếm) */
+        .hero-section {
+            background-color: var(--neu-blue);
+            background-image: linear-gradient(135deg, var(--neu-blue), var(--neu-light-blue));
+            color: white;
+            padding: 60px 0;
+            margin-bottom: 30px;
+        }
+
+        .search-box {
+            max-width: 700px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .search-box input {
+            height: 55px;
+            border-radius: 30px;
+            padding-left: 25px;
+            font-size: 1.1rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .search-box button {
+            position: absolute;
+            right: 5px;
+            top: 5px;
+            height: 45px;
+            width: 45px;
+            border-radius: 50%;
+            background-color: var(--neu-blue);
+            color: white;
+            border: none;
+        }
+
+        /* Tùy chỉnh 4 Tab điều hướng */
+        .neu-tabs {
+            border-bottom: 2px solid #dee2e6;
+        }
+
+        .neu-tabs .nav-link {
+            color: #6c757d;
+            font-weight: 500;
+            border: none;
+            padding: 12px 20px;
+            font-size: 1.05rem;
+        }
+
+        .neu-tabs .nav-link.active {
+            color: var(--neu-blue);
+            font-weight: bold;
+            background: transparent;
+            border-bottom: 3px solid var(--neu-blue);
+        }
+
+        /* Thẻ hiển thị dữ liệu (Card) */
+        .data-card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            transition: transform 0.2s, box-shadow 0.2s;
+            height: 100%;
+        }
+
+        .data-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+            cursor: pointer;
+        }
+
+        .card-code {
+            color: var(--neu-light-blue);
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+        <div class="container">
+            <a class="navbar-brand fw-bold text-primary" href="#" style="color: var(--neu-blue) !important;">
+                <i class="fa-solid fa-graduation-cap me-2"></i>NEU COURSE CLONE
+            </a>
+            <div class="d-flex">
+                <a href="#" class="btn btn-outline-primary btn-sm">Đăng nhập</a>
+            </div>
+        </div>
+    </nav>
+
+    <section class="hero-section text-center">
+        <div class="container">
+            <h1 class="fw-bold mb-3">Tra cứu Đề cương chi tiết</h1>
+            <p class="mb-4">Tìm kiếm thông tin Học phần, Ngành, Khoa/Viện nhanh chóng</p>
+
+            <div class="search-box">
+                <input type="text" id="searchInput" class="form-control form-control-lg" placeholder="Nhập mã hoặc tên học phần, ngành...">
+                <button type="button" id="btnSearch"><i class="fa-solid fa-search"></i></button>
+            </div>
+        </div>
+    </section>
+
+    <main class="container mb-5">
+
+        <div class="row align-items-center mb-4">
+            <div class="col-md-8">
+                <ul class="nav nav-tabs neu-tabs" id="mainTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" data-type="nganh">Ngành/Chương trình</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" data-type="hocphan">Học phần</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" data-type="khoa">Khoa/Viện</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" data-type="truong">Trường</button>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="col-md-4 d-flex justify-content-md-end mt-3 mt-md-0 gap-2">
+                <select id="versionSelect" class="form-select w-auto shadow-sm">
+                    <option value="K66">Phiên bản: K66 - 2024</option>
+                    <option value="K65">Phiên bản: K65 - 2023</option>
+                </select>
+                <div class="btn-group shadow-sm">
+                    <button class="btn btn-light active"><i class="fa-solid fa-grid-2 text-primary"></i> Lưới</button>
+                    <button class="btn btn-light"><i class="fa-solid fa-list"></i></button>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4" id="dataContainer">
+            <div class="col-12 text-center py-5 text-muted">
+                <i class="fa-solid fa-spinner fa-spin fa-2x mb-3"></i>
+                <p>Đang chuẩn bị giao diện...</p>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        const tabs = document.querySelectorAll('.neu-tabs .nav-link');
+        const dataContainer = document.getElementById('dataContainer');
+        const searchInput = document.getElementById('searchInput');
+        const btnSearch = document.getElementById('btnSearch');
+
+        // Hàm 1: Gọi API để lấy dữ liệu từ Backend
+        async function loadData(type, query = '') {
+            // 1. Hiển thị icon xoay xoay đang tải dữ liệu
+            dataContainer.innerHTML = `
+                <div class="col-12 text-center py-5 text-muted">
+                    <i class="fa-solid fa-spinner fa-spin fa-2x mb-3 text-primary"></i>
+                    <p>Đang tải dữ liệu...</p>
+                </div>`;
+
+            // 2. Xác định đường dẫn API dựa vào Tab đang chọn
+            let url = '';
+            if (type === 'nganh') url = '/api/majors';
+            else if (type === 'hocphan') url = `/api/courses?q=${query}`;
+            else if (type === 'khoa') url = '/api/faculties';
+            else if (type === 'truong') url = '/api/schools';
+
+            try {
+                // 3. Dùng Fetch để gọi Backend
+                const response = await fetch(url);
+                const result = await response.json();
+
+                // 4. Nếu Backend trả về thành công, gọi hàm vẽ HTML
+                if (result.status === 'success') {
+                    renderCards(type, result.data);
+                }
+            } catch (error) {
+                console.error("Lỗi:", error);
+                dataContainer.innerHTML = '<div class="col-12 text-center text-danger"><p>Lỗi kết nối đến máy chủ!</p></div>';
+            }
+        }
+
+        // Hàm 2: Nhận dữ liệu JSON và vẽ ra các thẻ (Card) HTML
+        function renderCards(type, data) {
+            // Nếu không có dữ liệu
+            if (data.length === 0) {
+                dataContainer.innerHTML = '<div class="col-12 text-center py-5 text-muted"><h5>Không tìm thấy kết quả nào phù hợp.</h5></div>';
+                return;
+            }
+
+            let htmlContent = '';
+            // Duyệt qua từng dòng dữ liệu và tạo mã HTML tương ứng
+            data.forEach(item => {
+                if (type === 'nganh') {
+                    htmlContent += `
+                        <div class="col-md-4">
+                            <div class="card data-card p-3">
+                                <h5 class="text-primary">${item.ten_nganh}</h5>
+                                <span class="card-code">Mã: ${item.ma_nganh}</span>
+                                <small class="text-muted mt-2"><i class="fa-solid fa-building"></i> ${item.khoa_vien}</small>
+                            </div>
+                        </div>`;
+                } else if (type === 'hocphan') {
+                    htmlContent += `
+                        <div class="col-md-4">
+                            <div class="card data-card p-3">
+                                <h5 class="text-primary">${item.ten_hoc_phan}</h5>
+                                <span class="card-code">Mã: ${item.ma_hoc_phan} | ${item.so_tin_chi} Tín chỉ</span>
+                                <small class="text-muted mt-2"><i class="fa-solid fa-book"></i> Quản lý: ${item.khoa_quan_ly}</small>
+                            </div>
+                        </div>`;
+                } else if (type === 'khoa') {
+                    htmlContent += `
+                        <div class="col-md-4">
+                            <div class="card data-card p-3">
+                                <h5 class="text-primary">${item.ten_khoa}</h5>
+                                <span class="card-code">Mã: ${item.ma_khoa}</span>
+                                <small class="text-muted mt-2"><i class="fa-solid fa-university"></i> Trực thuộc: ${item.thuoc_truong}</small>
+                            </div>
+                        </div>`;
+                } else if (type === 'truong') {
+                    htmlContent += `
+                        <div class="col-md-4">
+                            <div class="card data-card p-3">
+                                <h5 class="text-primary">${item.ten_truong}</h5>
+                                <span class="card-code">Mã: ${item.ma_truong}</span>
+                            </div>
+                        </div>`;
+                }
+            });
+
+            // Đổ toàn bộ HTML vừa tạo vào khung chứa
+            dataContainer.innerHTML = htmlContent;
+        }
+
+        // BẮT SỰ KIỆN GIAO DIỆN
+
+        // 1. Khi click vào các Tab
+        tabs.forEach(tab => {
+            tab.addEventListener('click', function() {
+                // Đổi màu tab đang chọn
+                tabs.forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+
+                // Load dữ liệu
+                const type = this.getAttribute('data-type');
+                loadData(type);
+            });
+        });
+
+        // 2. Khi nhấn nút Tìm kiếm (Thử nghiệm tìm môn học)
+        btnSearch.addEventListener('click', () => {
+            // Tự động chuyển sang tab Học phần để hiện kết quả
+            tabs.forEach(t => t.classList.remove('active'));
+            document.querySelector('[data-type="hocphan"]').classList.add('active');
+
+            // Gọi API tìm kiếm
+            const keyword = searchInput.value;
+            loadData('hocphan', keyword);
+        });
+
+        // Hỗ trợ nhấn phím Enter để tìm kiếm
+        searchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') btnSearch.click();
+        });
+
+        // 3. AUTO RUN: Vừa vào trang là tự động load dữ liệu Tab Ngành
+        document.addEventListener('DOMContentLoaded', () => {
+            loadData('nganh');
+        });
+    </script>
+</body>
+</html>
