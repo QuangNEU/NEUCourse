@@ -199,7 +199,7 @@ function renderTable(data) {
     return `
         <div class="table-responsive">
             <table class="table table-hover align-middle">
-                <thead class="table-light">
+                <thead>
                     <tr>${headers}</tr>
                 </thead>
                 <tbody>${rows}</tbody>
@@ -257,7 +257,7 @@ function renderPagination() {
     // Prev button
     html += `
         <li class="page-item ${state.page === 1 ? 'disabled' : ''}">
-            <a class="page-link" href="#" onclick="changePage(${state.page - 1}); return false;">Trang trước</a>
+            <a class="page-link" href="#" onclick="changePage(${state.page - 1}); return false;"><</a>
         </li>
     `;
 
@@ -276,7 +276,7 @@ function renderPagination() {
     // Next button
     html += `
         <li class="page-item ${state.page === state.totalPages || state.totalPages === 0 ? 'disabled' : ''}">
-            <a class="page-link" href="#" onclick="changePage(${state.page + 1}); return false;">Trang sau</a>
+            <a class="page-link" href="#" onclick="changePage(${state.page + 1}); return false;">></a>
         </li>
     `;
 
