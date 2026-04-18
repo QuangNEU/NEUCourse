@@ -1,0 +1,204 @@
+{% extends "base.html" %}
+
+{% block title %}{{ item.ten_truong or item.ten_khoa or item.ten_nganh }} - Chi tiết{% endblock %}
+
+{% block extra_css %}
+<style>
+    .detail-header {
+        background-color: var(--neu-blue);
+        color: white;
+        padding: 40px 0;
+        margin-bottom: 30px;
+    }
+    .breadcrumb-item + .breadcrumb-item::before {
+        color: rgba(255,255,255,0.6);
+    }
+    .breadcrumb-item a {
+        color: rgba(255,255,255,0.8);
+        text-decoration: none;
+    }
+    .breadcrumb-item.active {
+        color: white;
+    }
+    .info-card {
+        border: none;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        border-radius: 12px;
+    }
+    .section-title {
+        border-left: 4px solid var(--neu-blue);
+        padding-left: 15px;
+        margin-bottom: 20px;
+        font-weight: 700;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Header with Breadcrumbs -->
+<div class="detail-header">
+    <div class="container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-2">
+                <li class="breadcrumb-item"><a href="/">Trang chủ</a></li>
+                {% if type == 'school' %}
+                    <li class="breadcrumb-item active">Trường</li>
+                {% elif type == 'faculty' %}
+                    <li class="breadcrumb-item"><a href="/school/{{ item.truong.id }}">{{ item.truong.ten_truong }}</a></li>
+                    <li class="breadcrumb-item active">Khoa/Viện</li>
+                {% elif type == 'major' %}
+                    <li class="breadcrumb-item"><a href="/school/{{ item.khoa.truong.id }}">{{ item.khoa.truong.ten_truong }}</a></li>
+                    <li class="breadcrumb-item"><a href="/faculty/{{ item.khoa.id }}">{{ item.khoa.ten_khoa }}</a></li>
+                    <li class="breadcrumb-item active">Ngành</li>
+                {% endif %}
+            </ol>
+        </nav>
+        <h1 class="display-6 fw-bold mb-0">
+            {{ item.ten_truong or item.ten_khoa or item.ten_nganh }}
+        </h1>
+        <p class="mt-2 opacity-75 mb-0">Mã: {{ item.ma_truong or item.ma_khoa or item.ma_nganh }}</p>
+    </div>
+</div>
+
+<div class="container">
+    <div class="row">
+        <!-- Sidebar Info -->
+        <div class="col-lg-4 mb-4">
+            <div class="card info-card p-4">
+                <h5 class="fw-bold mb-3">Thông tin chung</h5>
+                <ul class="list-unstyled mb-0">
+                    <li class="mb-2">
+                        <small class="text-muted d-block">Tên đầy đủ</small>
+                        <span>{{ item.ten_truong or item.ten_khoa or item.ten_nganh }}</span>
+                    </li>
+                    <li class="mb-2">
+                        <small class="text-muted d-block">Mã định danh</small>
+                        <span class="badge bg-light text-dark border">{{ item.ma_truong or item.ma_khoa or item.ma_nganh }}</span>
+                    </li>
+                    {% if type == 'major' %}
+                    <li class="mb-2">
+                        <small class="text-muted d-block">Phiên bản hiện tại</small>
+                        <span class="text-primary fw-bold">{{ version.ma_phien_ban if version else 'N/A' }}</span>
+                    </li>
+                    <li class="mb-2">
+                        <small class="text-muted d-block">Năm bắt đầu</small>
+                        <span>{{ version.nam_bat_dau if version else 'N/A' }}</span>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+
+        <!-- Main Content Lists -->
+        <div class="col-lg-8">
+            
+            {% if type == 'school' %}
+                <h4 class="section-title">Danh sách Khoa/Viện trực thuộc</h4>
+                <div class="card info-card overflow-hidden mb-4">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Mã khoa</th>
+                                <th>Tên khoa/viện</th>
+                                <th>Số ngành</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for khoa in item.khoas %}
+                            <tr>
+                                <td class="fw-bold text-primary">{{ khoa.ma_khoa }}</td>
+                                <td><a href="/faculty/{{ khoa.id }}" class="text-decoration-none text-dark">{{ khoa.ten_khoa }}</a></td>
+                                <td><span class="badge rounded-pill bg-light text-dark border">{{ khoa.nganhs|length }}</span></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% endif %}
+
+            {% if type == 'faculty' %}
+                <h4 class="section-title">Danh sách Ngành đào tạo</h4>
+                <div class="card info-card overflow-hidden mb-4">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Mã ngành</th>
+                                <th>Tên ngành</th>
+                                <th>Phiên bản</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for nganh in item.nganhs %}
+                            <tr>
+                                <td class="fw-bold text-primary">{{ nganh.ma_nganh }}</td>
+                                <td><a href="/major/{{ nganh.id }}" class="text-decoration-none text-dark">{{ nganh.ten_nganh }}</a></td>
+                                <td>{{ nganh.phien_ban_cts[0].ma_phien_ban if nganh.phien_ban_cts else 'N/A' }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <h4 class="section-title">Học phần do Khoa quản lý</h4>
+                <div class="card info-card overflow-hidden">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Mã HP</th>
+                                <th>Tên học phần</th>
+                                <th>Số TC</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for hp in item.hoc_phans %}
+                            <tr>
+                                <td class="fw-bold text-primary">{{ hp.ma_hoc_phan }}</td>
+                                <td><a href="/course/{{ hp.id }}" class="text-decoration-none text-dark">{{ hp.ten_hoc_phan }}</a></td>
+                                <td>{{ hp.so_tin_chi }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% endif %}
+
+            {% if type == 'major' %}
+                <h4 class="section-title">Khung chương trình đào tạo</h4>
+                <div class="card info-card overflow-hidden">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Kỳ</th>
+                                <th>Mã HP</th>
+                                <th>Tên học phần</th>
+                                <th>Số TC</th>
+                                <th>Loại</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if version %}
+                                {% for khung in version.khung_chuong_trinhs|sort(attribute='hoc_ky_du_kien') %}
+                                <tr>
+                                    <td class="text-center"><span class="badge bg-secondary">{{ khung.hoc_ky_du_kien }}</span></td>
+                                    <td class="fw-bold text-primary">{{ khung.hoc_phan.ma_hoc_phan }}</td>
+                                    <td><a href="/course/{{ khung.hoc_phan.id }}" class="text-decoration-none text-dark">{{ khung.hoc_phan.ten_hoc_phan }}</a></td>
+                                    <td>{{ khung.hoc_phan.so_tin_chi }}</td>
+                                    <td>
+                                        <span class="small {% if khung.loai_mon == 'Bắt buộc' %}text-danger{% else %}text-muted{% endif %}">
+                                            {{ khung.loai_mon }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr><td colspan="5" class="text-center py-4">Chưa có dữ liệu khung chương trình.</td></tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            {% endif %}
+
+        </div>
+    </div>
+</div>
+{% endblock %}

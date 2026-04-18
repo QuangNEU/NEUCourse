@@ -1,0 +1,214 @@
+{% extends "base.html" %}
+
+{% block title %}{{ course.ten_hoc_phan }} - Đề cương chi tiết{% endblock %}
+
+{% block extra_css %}
+<style>
+    .syllabus-header {
+        background-color: #F8F9FA;
+        border-bottom: 1px solid #EEE;
+        padding: 40px 0;
+    }
+    .syllabus-tab-container {
+        margin-top: -1px;
+    }
+    .nav-syllabus {
+        border-bottom: 1px solid #DEE2E6;
+    }
+    .nav-syllabus .nav-link {
+        border: none;
+        padding: 15px 25px;
+        color: var(--text-muted);
+        font-weight: 600;
+        position: relative;
+    }
+    .nav-syllabus .nav-link.active {
+        color: var(--neu-blue);
+        background: none;
+    }
+    .nav-syllabus .nav-link.active::after {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background-color: var(--neu-blue);
+    }
+    .content-card {
+        background: white;
+        border-radius: 0 0 12px 12px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        padding: 30px;
+        min-height: 400px;
+    }
+    .table-syllabus th {
+        background-color: #F8F9FA;
+        font-weight: 600;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="syllabus-header">
+    <div class="container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-2">
+                <li class="breadcrumb-item"><a href="/" class="text-decoration-none text-muted">Trang chủ</a></li>
+                <li class="breadcrumb-item"><a href="/faculty/{{ course.khoa_quan_ly.id }}" class="text-decoration-none text-muted">{{ course.khoa_quan_ly.ten_khoa }}</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Học phần</li>
+            </ol>
+        </nav>
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="fw-bold text-dark mb-1">{{ course.ten_hoc_phan }}</h1>
+                <p class="text-muted mb-0">
+                    <span class="me-3"><i class="fa-solid fa-code me-1"></i> Mã HP: <strong>{{ course.ma_hoc_phan }}</strong></span>
+                    <span class="me-3"><i class="fa-solid fa-layer-group me-1"></i> Tín chỉ: <strong>{{ course.so_tin_chi }}</strong></span>
+                    <span><i class="fa-solid fa-calendar-check me-1"></i> Năm áp dụng: <strong>{{ syllabus.nam_ap_dung if syllabus else 'N/A' }}</strong></span>
+                </p>
+            </div>
+            <div>
+                <span class="badge {% if syllabus and syllabus.trang_thai == 'Published' %}bg-success{% else %}bg-secondary{% endif %} px-3 py-2">
+                    {{ syllabus.trang_thai if syllabus else 'Chưa có đề cương' }}
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container mt-4">
+    <div class="syllabus-tab-container">
+        <!-- Syllabus Tabs -->
+        <ul class="nav nav-syllabus" id="syllabusTabs" role="tablist">
+            <li class="nav-item">
+                <button class="nav-link active" id="clo-tab" data-bs-toggle="tab" data-bs-target="#clo" type="button">Chuẩn đầu ra (CLO)</button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" id="plan-tab" data-bs-toggle="tab" data-bs-target="#plan" type="button">Kế hoạch giảng dạy</button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" id="eval-tab" data-bs-toggle="tab" data-bs-target="#eval" type="button">Đánh giá học phần</button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" id="docs-tab" data-bs-toggle="tab" data-bs-target="#docs" type="button">Học liệu & Tài liệu</button>
+            </li>
+        </ul>
+
+        <!-- Tab Content -->
+        <div class="tab-content content-card" id="syllabusTabsContent">
+            
+            <!-- Tab: CLO -->
+            <div class="tab-pane fade show active" id="clo" role="tabpanel">
+                <h5 class="fw-bold mb-4">Chuẩn đầu ra học phần (Course Learning Outcomes)</h5>
+                {% if syllabus and syllabus.clos %}
+                <div class="table-responsive">
+                    <table class="table table-bordered table-syllabus">
+                        <thead>
+                            <tr>
+                                <th style="width: 100px;">Mã CLO</th>
+                                <th>Mô tả chuẩn đầu ra</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for clo in syllabus.clos %}
+                            <tr>
+                                <td class="fw-bold text-primary">{{ clo.ma_clo }}</td>
+                                <td>{{ clo.mo_ta }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted italic">Dữ liệu chuẩn đầu ra đang được cập nhật...</p>
+                {% endif %}
+            </div>
+
+            <!-- Tab: Kế hoạch giảng dạy -->
+            <div class="tab-pane fade" id="plan" role="tabpanel">
+                <h5 class="fw-bold mb-4">Kế hoạch giảng dạy và học tập chi tiết</h5>
+                {% if syllabus and syllabus.lich_trinh %}
+                <div class="table-responsive">
+                    <table class="table table-bordered table-syllabus">
+                        <thead>
+                            <tr>
+                                <th style="width: 80px;">Tuần</th>
+                                <th>Chủ đề bài học</th>
+                                <th>Nội dung chi tiết</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for schedule in syllabus.lich_trinh|sort(attribute='tuan_thu') %}
+                            <tr>
+                                <td class="text-center fw-bold">{{ schedule.tuan_thu }}</td>
+                                <td class="fw-bold">{{ schedule.chu_de_bai_hoc }}</td>
+                                <td>{{ schedule.noi_dung_chi_tiet }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted italic">Kế hoạch giảng dạy đang được cập nhật...</p>
+                {% endif %}
+            </div>
+
+            <!-- Tab: Đánh giá -->
+            <div class="tab-pane fade" id="eval" role="tabpanel">
+                <h5 class="fw-bold mb-4">Phương pháp đánh giá và trọng số</h5>
+                {% if syllabus and syllabus.danh_gia %}
+                <div class="table-responsive">
+                    <table class="table table-bordered table-syllabus">
+                        <thead>
+                            <tr>
+                                <th>Thành phần đánh giá</th>
+                                <th>Hình thức đánh giá</th>
+                                <th style="width: 120px;">Trọng số (%)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for eval in syllabus.danh_gia %}
+                            <tr>
+                                <td class="fw-bold">{{ eval.thanh_phan }}</td>
+                                <td>{{ eval.hinh_thuc }}</td>
+                                <td class="text-center">{{ (eval.trong_so * 100)|int }}%</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted italic">Thông tin đánh giá đang được cập nhật...</p>
+                {% endif %}
+            </div>
+
+            <!-- Tab: Học liệu -->
+            <div class="tab-pane fade" id="docs" role="tabpanel">
+                <h5 class="fw-bold mb-4">Học liệu và Tài liệu tham khảo</h5>
+                {% if syllabus and syllabus.hoc_lieu %}
+                <div class="row">
+                    {% for doc in syllabus.hoc_lieu %}
+                    <div class="col-md-6 mb-3">
+                        <div class="d-flex p-3 border rounded">
+                            <div class="me-3 text-primary" style="font-size: 2rem;">
+                                <i class="fa-solid {% if doc.loai == 'Giáo trình' %}fa-book{% else %}fa-file-lines{% endif %}"></i>
+                            </div>
+                            <div>
+                                <span class="badge bg-light text-muted border mb-1">{{ doc.loai }}</span>
+                                <h6 class="fw-bold mb-1">{{ doc.ten_tai_lieu }}</h6>
+                                <p class="small text-muted mb-0">Tác giả: {{ doc.tac_gia }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted italic">Danh sách học liệu đang được cập nhật...</p>
+                {% endif %}
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}
