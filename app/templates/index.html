@@ -1,289 +1,235 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NEU Course - Hệ thống Quản lý Đề cương</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+{% extends "base.html" %}
 
-    <style>
-        /* Tùy chỉnh màu sắc thương hiệu NEU (Xanh dương đậm) */
-        :root {
-            --neu-blue: #00305b;
-            --neu-light-blue: #0056a4;
-        }
+{% block title %}Tra cứu Chương trình đào tạo - NEU{% endblock %}
 
-        body { background-color: #f8f9fa; }
+{% block extra_css %}
+<style>
+    /* Search Section Styles */
+    .search-section {
+        padding: 60px 0 40px;
+        background-color: white;
+    }
 
-        /* Khu vực Hero (Chứa ô tìm kiếm) */
-        .hero-section {
-            background-color: var(--neu-blue);
-            background-image: linear-gradient(135deg, var(--neu-blue), var(--neu-light-blue));
-            color: white;
-            padding: 60px 0;
-            margin-bottom: 30px;
-        }
+    .search-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--text-main);
+        margin-bottom: 30px;
+    }
 
-        .search-box {
-            max-width: 700px;
-            margin: 0 auto;
-            position: relative;
-        }
+    .search-wrapper {
+        max-width: 700px;
+        margin: 0 auto;
+        position: relative;
+    }
 
-        .search-box input {
-            height: 55px;
-            border-radius: 30px;
-            padding-left: 25px;
-            font-size: 1.1rem;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        }
+    .search-pill {
+        border-radius: 50px;
+        padding: 15px 30px;
+        padding-right: 60px;
+        border: 2px solid #EEE;
+        font-size: 1.1rem;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
 
-        .search-box button {
-            position: absolute;
-            right: 5px;
-            top: 5px;
-            height: 45px;
-            width: 45px;
-            border-radius: 50%;
-            background-color: var(--neu-blue);
-            color: white;
-            border: none;
-        }
+    .search-pill:focus {
+        border-color: var(--neu-blue);
+        box-shadow: 0 4px 20px rgba(8, 92, 167, 0.1);
+        outline: none;
+    }
 
-        /* Tùy chỉnh 4 Tab điều hướng */
-        .neu-tabs {
-            border-bottom: 2px solid #dee2e6;
-        }
+    .search-icon-btn {
+        position: absolute;
+        right: 20px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        color: var(--neu-blue);
+        font-size: 1.2rem;
+        cursor: pointer;
+    }
 
-        .neu-tabs .nav-link {
-            color: #6c757d;
-            font-weight: 500;
-            border: none;
-            padding: 12px 20px;
-            font-size: 1.05rem;
-        }
+    /* Tabs & Filters Styles */
+    .filter-container {
+        background-color: white;
+        border-bottom: 1px solid var(--border-color);
+        padding-top: 10px;
+    }
 
-        .neu-tabs .nav-link.active {
-            color: var(--neu-blue);
-            font-weight: bold;
-            background: transparent;
-            border-bottom: 3px solid var(--neu-blue);
-        }
+    .nav-tabs-neu {
+        border-bottom: none;
+    }
 
-        /* Thẻ hiển thị dữ liệu (Card) */
-        .data-card {
-            border: none;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            transition: transform 0.2s, box-shadow 0.2s;
-            height: 100%;
-        }
+    .nav-tabs-neu .nav-link {
+        border: none;
+        color: var(--text-muted);
+        font-weight: 500;
+        padding: 12px 20px;
+        position: relative;
+        transition: color 0.2s;
+    }
 
-        .data-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 20px rgba(0,0,0,0.12);
-            cursor: pointer;
-        }
+    .nav-tabs-neu .nav-link:hover {
+        color: var(--neu-blue);
+    }
 
-        .card-code {
-            color: var(--neu-light-blue);
-            font-weight: bold;
-            font-size: 0.9rem;
-        }
-    </style>
-</head>
-<body>
+    .nav-tabs-neu .nav-link.active {
+        color: var(--neu-blue);
+        background: none;
+    }
 
-    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
-        <div class="container">
-            <a class="navbar-brand fw-bold text-primary" href="#" style="color: var(--neu-blue) !important;">
-                <i class="fa-solid fa-graduation-cap me-2"></i>NEU COURSE CLONE
-            </a>
-            <div class="d-flex">
-                <a href="#" class="btn btn-outline-primary btn-sm">Đăng nhập</a>
-            </div>
+    .nav-tabs-neu .nav-link.active::after {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: 20px;
+        right: 20px;
+        height: 3px;
+        background-color: var(--neu-blue);
+        border-radius: 3px 3px 0 0;
+    }
+
+    .filter-controls {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        padding-bottom: 10px;
+    }
+
+    .form-select-sm {
+        border-radius: 8px;
+        border-color: #EEE;
+    }
+
+    .view-toggle {
+        display: flex;
+        background-color: #F0F2F5;
+        border-radius: 8px;
+        padding: 3px;
+    }
+
+    .view-btn {
+        border: none;
+        background: none;
+        padding: 5px 10px;
+        border-radius: 6px;
+        color: var(--text-muted);
+        transition: all 0.2s;
+    }
+
+    .view-btn.active {
+        background-color: white;
+        color: var(--neu-blue);
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Search Section -->
+<section class="search-section text-center">
+    <div class="container">
+        <h1 class="search-title">Tra cứu</h1>
+        <div class="search-wrapper">
+            <input type="text" class="form-control search-pill" placeholder="Tìm kiếm ngành, học phần, khoa...">
+            <button class="search-icon-btn"><i class="fa-solid fa-magnifying-glass"></i></button>
         </div>
-    </nav>
+    </div>
+</section>
 
-    <section class="hero-section text-center">
-        <div class="container">
-            <h1 class="fw-bold mb-3">Tra cứu Đề cương chi tiết</h1>
-            <p class="mb-4">Tìm kiếm thông tin Học phần, Ngành, Khoa/Viện nhanh chóng</p>
+<!-- Filters & Tabs Section -->
+<section class="filter-container sticky-top" style="top: 72px;">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-end">
+            <!-- Tabs -->
+            <ul class="nav nav-tabs nav-tabs-neu" id="mainTabs" role="tablist">
+                <li class="nav-item">
+                    <button class="nav-link active" id="nganh-tab" data-bs-toggle="tab" data-bs-target="#nganh" type="button">Ngành/Chương trình</button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" id="hocphan-tab" data-bs-toggle="tab" data-bs-target="#hocphan" type="button">Học phần</button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" id="khoa-tab" data-bs-toggle="tab" data-bs-target="#khoa" type="button">Khoa/Viện</button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" id="truong-tab" data-bs-toggle="tab" data-bs-target="#truong" type="button">Trường</button>
+                </li>
+            </ul>
 
-            <div class="search-box">
-                <input type="text" id="searchInput" class="form-control form-control-lg" placeholder="Nhập mã hoặc tên học phần, ngành...">
-                <button type="button" id="btnSearch"><i class="fa-solid fa-search"></i></button>
-            </div>
-        </div>
-    </section>
-
-    <main class="container mb-5">
-
-        <div class="row align-items-center mb-4">
-            <div class="col-md-8">
-                <ul class="nav nav-tabs neu-tabs" id="mainTabs" role="tablist">
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link active" data-type="nganh">Ngành/Chương trình</button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" data-type="hocphan">Học phần</button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" data-type="khoa">Khoa/Viện</button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" data-type="truong">Trường</button>
-                    </li>
-                </ul>
-            </div>
-
-            <div class="col-md-4 d-flex justify-content-md-end mt-3 mt-md-0 gap-2">
-                <select id="versionSelect" class="form-select w-auto shadow-sm">
-                    <option value="K66">Phiên bản: K66 - 2024</option>
-                    <option value="K65">Phiên bản: K65 - 2023</option>
-                </select>
-                <div class="btn-group shadow-sm">
-                    <button class="btn btn-light active"><i class="fa-solid fa-grid-2 text-primary"></i> Lưới</button>
-                    <button class="btn btn-light"><i class="fa-solid fa-list"></i></button>
+            <!-- Right Controls -->
+            <div class="filter-controls">
+                <div class="d-flex align-items-center">
+                    <span class="text-muted small me-2">Phiên bản:</span>
+                    <select class="form-select form-select-sm" style="width: 120px;">
+                        <option value="2026">K68 - 2026</option>
+                        <option value="2025">K67 - 2025</option>
+                        <option value="2024">K66 - 2024</option>
+                    </select>
+                </div>
+                <div class="view-toggle">
+                    <button class="view-btn active" title="List View"><i class="fa-solid fa-list"></i></button>
+                    <button class="view-btn" title="Grid View"><svg viewBox="64 64 896 896" focusable="false" data-icon="appstore" width="1em" height="1em" fill="currentColor" aria-hidden="true"><path d="M464 144H160c-8.8 0-16 7.2-16 16v304c0 8.8 7.2 16 16 16h304c8.8 0 16-7.2 16-16V160c0-8.8-7.2-16-16-16zm-52 268H212V212h200v200zm452-268H560c-8.8 0-16 7.2-16 16v304c0 8.8 7.2 16 16 16h304c8.8 0 16-7.2 16-16V160c0-8.8-7.2-16-16-16zm-52 268H612V212h200v200zM464 544H160c-8.8 0-16 7.2-16 16v304c0 8.8 7.2 16 16 16h304c8.8 0 16-7.2 16-16V560c0-8.8-7.2-16-16-16zm-52 268H212V612h200v200zm452-268H560c-8.8 0-16 7.2-16 16v304c0 8.8 7.2 16 16 16h304c8.8 0 16-7.2 16-16V560c0-8.8-7.2-16-16-16zm-52 268H612V612h200v200z"></path></svg><i class="fa-solid fa-grid-2"></i></button>
                 </div>
             </div>
         </div>
+    </div>
+</section>
 
-        <div class="row g-4" id="dataContainer">
-            <div class="col-12 text-center py-5 text-muted">
-                <i class="fa-solid fa-spinner fa-spin fa-2x mb-3"></i>
-                <p>Đang chuẩn bị giao diện...</p>
+<!-- Data Display Section -->
+<section class="py-4">
+    <div class="container">
+        <div class="tab-content" id="mainTabsContent">
+            <!-- Tab Pane: Ngành -->
+            <div class="tab-pane fade show active" id="nganh" role="tabpanel">
+                <div id="nganh-data-container">
+                    <!-- Data will be loaded via AJAX -->
+                    <div class="text-center py-5 text-muted">
+                        <div class="spinner-border text-primary mb-3" role="status"></div>
+                        <p>Đang tải dữ liệu...</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Tab Pane: Học phần -->
+            <div class="tab-pane fade" id="hocphan" role="tabpanel">
+                <div id="hocphan-data-container"></div>
+            </div>
+
+            <!-- Tab Pane: Khoa/Viện -->
+            <div class="tab-pane fade" id="khoa" role="tabpanel">
+                <div id="khoa-data-container"></div>
+            </div>
+
+            <!-- Tab Pane: Trường -->
+            <div class="tab-pane fade" id="truong" role="tabpanel">
+                <div id="truong-data-container"></div>
             </div>
         </div>
 
-    </main>
-
-    <script>
-        const tabs = document.querySelectorAll('.neu-tabs .nav-link');
-        const dataContainer = document.getElementById('dataContainer');
-        const searchInput = document.getElementById('searchInput');
-        const btnSearch = document.getElementById('btnSearch');
-
-        // Hàm 1: Gọi API để lấy dữ liệu từ Backend
-        async function loadData(type, query = '') {
-            // 1. Hiển thị icon xoay xoay đang tải dữ liệu
-            dataContainer.innerHTML = `
-                <div class="col-12 text-center py-5 text-muted">
-                    <i class="fa-solid fa-spinner fa-spin fa-2x mb-3 text-primary"></i>
-                    <p>Đang tải dữ liệu...</p>
-                </div>`;
-
-            // 2. Xác định đường dẫn API dựa vào Tab đang chọn
-            let url = '';
-            if (type === 'nganh') url = '/api/majors';
-            else if (type === 'hocphan') url = `/api/courses?q=${query}`;
-            else if (type === 'khoa') url = '/api/faculties';
-            else if (type === 'truong') url = '/api/schools';
-
-            try {
-                // 3. Dùng Fetch để gọi Backend
-                const response = await fetch(url);
-                const result = await response.json();
-
-                // 4. Nếu Backend trả về thành công, gọi hàm vẽ HTML
-                if (result.status === 'success') {
-                    renderCards(type, result.data);
-                }
-            } catch (error) {
-                console.error("Lỗi:", error);
-                dataContainer.innerHTML = '<div class="col-12 text-center text-danger"><p>Lỗi kết nối đến máy chủ!</p></div>';
-            }
-        }
-
-        // Hàm 2: Nhận dữ liệu JSON và vẽ ra các thẻ (Card) HTML
-        function renderCards(type, data) {
-            // Nếu không có dữ liệu
-            if (data.length === 0) {
-                dataContainer.innerHTML = '<div class="col-12 text-center py-5 text-muted"><h5>Không tìm thấy kết quả nào phù hợp.</h5></div>';
-                return;
-            }
-
-            let htmlContent = '';
-            // Duyệt qua từng dòng dữ liệu và tạo mã HTML tương ứng
-            data.forEach(item => {
-                if (type === 'nganh') {
-                    htmlContent += `
-                        <div class="col-md-4">
-                            <div class="card data-card p-3">
-                                <h5 class="text-primary">${item.ten_nganh}</h5>
-                                <span class="card-code">Mã: ${item.ma_nganh}</span>
-                                <small class="text-muted mt-2"><i class="fa-solid fa-building"></i> ${item.khoa_vien}</small>
-                            </div>
-                        </div>`;
-                } else if (type === 'hocphan') {
-                    htmlContent += `
-                        <div class="col-md-4">
-                            <div class="card data-card p-3">
-                                <h5 class="text-primary">${item.ten_hoc_phan}</h5>
-                                <span class="card-code">Mã: ${item.ma_hoc_phan} | ${item.so_tin_chi} Tín chỉ</span>
-                                <small class="text-muted mt-2"><i class="fa-solid fa-book"></i> Quản lý: ${item.khoa_quan_ly}</small>
-                            </div>
-                        </div>`;
-                } else if (type === 'khoa') {
-                    htmlContent += `
-                        <div class="col-md-4">
-                            <div class="card data-card p-3">
-                                <h5 class="text-primary">${item.ten_khoa}</h5>
-                                <span class="card-code">Mã: ${item.ma_khoa}</span>
-                                <small class="text-muted mt-2"><i class="fa-solid fa-university"></i> Trực thuộc: ${item.thuoc_truong}</small>
-                            </div>
-                        </div>`;
-                } else if (type === 'truong') {
-                    htmlContent += `
-                        <div class="col-md-4">
-                            <div class="card data-card p-3">
-                                <h5 class="text-primary">${item.ten_truong}</h5>
-                                <span class="card-code">Mã: ${item.ma_truong}</span>
-                            </div>
-                        </div>`;
-                }
-            });
-
-            // Đổ toàn bộ HTML vừa tạo vào khung chứa
-            dataContainer.innerHTML = htmlContent;
-        }
-
-        // BẮT SỰ KIỆN GIAO DIỆN
-
-        // 1. Khi click vào các Tab
-        tabs.forEach(tab => {
-            tab.addEventListener('click', function() {
-                // Đổi màu tab đang chọn
-                tabs.forEach(t => t.classList.remove('active'));
-                this.classList.add('active');
-
-                // Load dữ liệu
-                const type = this.getAttribute('data-type');
-                loadData(type);
-            });
-        });
-
-        // 2. Khi nhấn nút Tìm kiếm (Thử nghiệm tìm môn học)
-        btnSearch.addEventListener('click', () => {
-            // Tự động chuyển sang tab Học phần để hiện kết quả
-            tabs.forEach(t => t.classList.remove('active'));
-            document.querySelector('[data-type="hocphan"]').classList.add('active');
-
-            // Gọi API tìm kiếm
-            const keyword = searchInput.value;
-            loadData('hocphan', keyword);
-        });
-
-        // Hỗ trợ nhấn phím Enter để tìm kiếm
-        searchInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') btnSearch.click();
-        });
-
-        // 3. AUTO RUN: Vừa vào trang là tự động load dữ liệu Tab Ngành
-        document.addEventListener('DOMContentLoaded', () => {
-            loadData('nganh');
-        });
-    </script>
-</body>
-</html>
+        <!-- Pagination (Static for UI structure) -->
+        <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
+            <div class="d-flex align-items-center">
+                <span class="text-muted small me-2">Hiển thị:</span>
+                <select class="form-select form-select-sm" style="width: 80px;">
+                    <option value="10">10</option>
+                    <option value="20" selected>20</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                </select>
+            </div>
+            <nav aria-label="Page navigation">
+                <ul class="pagination pagination-sm mb-0">
+                    <li class="page-item disabled"><a class="page-link" href="#"><</a></li>
+                    <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                    <li class="page-item"><a class="page-link" href="#">2</a></li>
+                    <li class="page-item"><a class="page-link" href="#">3</a></li>
+                    <li class="page-item"><a class="page-link" href="#">></a></li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+</section>
+{% endblock %}

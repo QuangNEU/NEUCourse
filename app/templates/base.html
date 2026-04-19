@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}NEU Course Management{% endblock %}</title>
+    <!-- CSS Libraries -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+    <!-- Header / Navbar -->
+    <nav class="navbar navbar-neu sticky-top">
+        <div class="container">
+            <div class="d-flex align-items-center justify-content-between w-100">
+                
+                <!-- Brand / Logo -->
+                <a href="/" class="logo-container">
+                    <img src="{{ url_for('static', filename='images/NEU.svg') }}" alt="NEU Logo">
+                    <span class="d-none d-lg-block">ĐẠI HỌC KINH TẾ QUỐC DÂN<br><small style="font-weight: 400; font-size: 0.75rem; color: rgba(255,255,255,0.7); text-transform: uppercase;">Chương trình đào tạo</small></span>
+                </a>
+
+                <!-- Top Menu (Counts) -->
+                <div class="d-none d-md-flex align-items-center mx-auto">
+                    <a href="#" class="top-menu-item">Chương trình đào tạo <span class="badge rounded-pill">120</span></a>
+                    <a href="#" class="top-menu-item">Khoa/Viện <span class="badge rounded-pill">35</span></a>
+                    <a href="#" class="top-menu-item">Trường <span class="badge rounded-pill">5</span></a>
+                </div>
+
+                <!-- Right Action Icons -->
+                <div class="header-icons">
+                    <a href="#" title="Ngôn ngữ"><i class="fa-solid fa-earth-asia"></i></a>
+                    <a href="#" title="Tìm kiếm"><i class="fa-solid fa-magnifying-glass"></i></a>
+                    <button class="btn btn-login ms-2">Đăng nhập</button>
+                    <a href="#" class="ms-2" title="Bookmarks"><i class="fa-regular fa-bookmark"></i></a>
+                </div>
+
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer (Minimal for now) -->
+    <footer class="py-4 mt-5 bg-white border-top">
+        <div class="container text-center text-muted">
+            <small>&copy; 2026 Đại học Kinh tế Quốc dân. All rights reserved.</small>
+        </div>
+    </footer>
+
+    <!-- JS Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
