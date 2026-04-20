@@ -2,6 +2,17 @@ from . import db
 from datetime import datetime
 
 
+# 0. USER AUTHENTICATION (NGƯỜI DÙNG)
+class User(db.Model):
+    __tablename__ = 'user'
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(50), unique=True, nullable=False)
+    password = db.Column(db.String(255), nullable=False)
+    ho_ten = db.Column(db.String(255), nullable=False)
+    vai_tro = db.Column(db.String(20), default='User')  # 'User' hoặc 'Admin'
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+
 # 1. QUẢN LÝ HÀNH CHÍNH
 class Truong(db.Model):
     __tablename__ = 'truong'

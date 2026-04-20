@@ -36,7 +36,24 @@
                 <div class="header-icons">
                     <a href="#" title="Ngôn ngữ"><i class="fa-solid fa-earth-asia"></i></a>
                     <a href="#" title="Tìm kiếm"><i class="fa-solid fa-magnifying-glass"></i></a>
-                    <button class="btn btn-login ms-2">Đăng nhập</button>
+
+                    {% if session.user_id %}
+                        <!-- User is logged in -->
+                        <div class="dropdown" style="display: inline-block;">
+                            <button class="btn btn-user-profile" data-bs-toggle="dropdown">
+                                <i class="fa-solid fa-user-circle"></i> {{ session.ho_ten }}
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><span class="dropdown-item" style="font-size: 0.9rem; color: #999;">Vai trò: <strong>{{ session.vai_tro }}</strong></span></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="{{ url_for('course.logout') }}"><i class="fa-solid fa-sign-out-alt"></i> Đăng xuất</a></li>
+                            </ul>
+                        </div>
+                    {% else %}
+                        <!-- User is not logged in -->
+                        <a href="{{ url_for('course.login') }}" class="btn btn-login ms-2">Đăng nhập</a>
+                    {% endif %}
+
                     <a href="#" class="ms-2" title="Bookmarks"><i class="fa-regular fa-bookmark"></i></a>
                 </div>
 

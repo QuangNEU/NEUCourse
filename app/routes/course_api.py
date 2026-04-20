@@ -1,7 +1,43 @@
-from flask import Blueprint, jsonify, request, render_template
-from app.models import db, Truong, KhoaVien, NganhHoc, PhienBanCT, HocPhan, KhungChuongTrinh
+from flask import Blueprint, jsonify, request, render_template, redirect, url_for, session
+from ..models import Truong, KhoaVien, NganhHoc, PhienBanCT, HocPhan, KhungChuongTrinh, DeCuongChiTiet, User
 
 course_bp = Blueprint('course', __name__)
+
+# ==============================================================
+# AUTHENTICATION ROUTES
+# ==============================================================
+
+@course_bp.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form.get('username', '').strip()
+        password = request.form.get('password', '')
+        
+        # Tìm user trong database
+        user = User.query.filter_by(username=username, password=password).first()
+        
+        if user:
+            # Lưu thông tin vào session
+            session['user_id'] = user.id
+            session['username'] = user.username
+            session['ho_ten'] = user.ho_ten
+            session['vai_tro'] = user.vai_tro
+            return redirect(url_for('course.home'))
+        else:
+            return render_template('login.html', error='Tên đăng nhập hoặc mật khẩu không chính xác!')
+    
+    return render_template('login.html')
+
+
+@course_bp.route('/logout', methods=['GET'])
+def logout():
+    session.clear()
+    return redirect(url_for('course.home'))
+
+
+# ==============================================================
+# MAIN ROUTES
+# ==============================================================
 
 @course_bp.route('/', methods=['GET'])
 def home():
