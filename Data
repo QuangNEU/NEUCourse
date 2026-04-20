@@ -1,0 +1,142 @@
+Ma_Truong,Ten_Truong,Ma_Khoa,Ten_Khoa,Ma_Nganh,Ten_Nganh,Ma_Hoc_Phan,Ten_Hoc_Phan,So_Tin_Chi
+SOT,Trường Công nghệ,CNTT,Viện Công nghệ thông tin,7480101,Khoa học máy tính,IT101,Tin học đại cương,3
+SOT,Trường Công nghệ,CNTT,Viện Công nghệ thông tin,7480101,Khoa học máy tính,IT102,Cấu trúc dữ liệu và giải thuật,3
+SOT,Trường Công nghệ,CNTT,Viện Công nghệ thông tin,7480101,Khoa học máy tính,IT103,Hệ quản trị Cơ sở dữ liệu,3
+SOT,Trường Công nghệ,CNTT,Viện Công nghệ thông tin,7480201,Công nghệ thông tin,IT201,Mạng máy tính,3
+SOT,Trường Công nghệ,TKT,Khoa Toán kinh tế,EP02,Toán Kinh tế,MA101,Toán cao cấp 1,3
+SOB,Trường Kinh doanh,QTKD,Khoa Quản trị kinh doanh,7340101,Quản trị kinh doanh,BM101,Quản trị học,3
+SOB,Trường Kinh doanh,QTKD,Khoa Quản trị kinh doanh,7340101,Quản trị kinh doanh,BM102,Quản trị chiến lược,3
+SOB,Trường Kinh doanh,MKT,Khoa Marketing,7340115,Marketing,MK101,Marketing căn bản,3
+SOB,Trường Kinh doanh,MKT,Khoa Marketing,7340115,Marketing,MK102,Nghiên cứu Marketing,3
+SOE,Trường Kinh tế,KTH,Khoa Kinh tế học,7310101,Kinh tế học,EC101,Kinh tế vi mô 1,3
+SOE,Trường Kinh tế,KTH,Khoa Kinh tế học,7310101,Kinh tế học,EC102,Kinh tế vĩ mô 1,3
+SOE,Trường Kinh tế,LUAT,Khoa Luật,7380101,Luật,LW101,Pháp luật đại cương,3
+NEU_INST,Khối Viện Độc Lập,KTKT,Viện Kế toán - Kiểm toán,7340301,Kế toán,AC101,Nguyên lý kế toán,3
+NEU_INST,Khối Viện Độc Lập,KTKT,Viện Kế toán - Kiểm toán,7340302,Kiểm toán,AC102,Kiểm toán căn bản,3
+SOT,Trường Công nghệ,CNTT,Viện Công nghệ thông tin và Kinh tế số,7480101,Khoa học máy tính,IT101,Tin học đại cương,3
+SOT,Trường Công nghệ,CNTT,Viện Công nghệ thông tin và Kinh tế số,7480101,Khoa học máy tính,IT102,Cấu trúc dữ liệu và giải thuật,3
+SOT,Trường Công nghệ,CNTT,Viện Công nghệ thông tin và Kinh tế số,7480101,Khoa học máy tính,IT103,Hệ quản trị Cơ sở dữ liệu,3
+SOT,Trường Công nghệ,CNTT,Viện Công nghệ thông tin và Kinh tế số,7480201,Công nghệ thông tin,IT201,Mạng máy tính,3
+SOT,Trường Công nghệ,CNTT,Viện Công nghệ thông tin và Kinh tế số,7480201,Công nghệ thông tin,IT202,Hệ điều hành,3
+SOT,Trường Công nghệ,CNTT,Viện Công nghệ thông tin và Kinh tế số,7480202,An toàn thông tin,IT301,Mật mã học cơ sở,3
+SOT,Trường Công nghệ,CNTT,Viện Công nghệ thông tin và Kinh tế số,7480202,An toàn thông tin,IT302,An ninh mạng,3
+SOT,Trường Công nghệ,HTTT,Khoa Hệ thống thông tin quản lý,7340405,Hệ thống thông tin quản lý,IS101,Phân tích thiết kế hệ thống,3
+SOT,Trường Công nghệ,HTTT,Khoa Hệ thống thông tin quản lý,7340405,Hệ thống thông tin quản lý,IS102,Quản trị dự án CNTT,3
+SOT,Trường Công nghệ,HTTT,Khoa Hệ thống thông tin quản lý,7340405,Hệ thống thông tin quản lý,IS103,Thương mại điện tử,3
+SOT,Trường Công nghệ,KHDL,Khoa Khoa học dữ liệu và Trí tuệ nhân tạo,EP15,Khoa học dữ liệu,DS101,Toán cho học máy,3
+SOT,Trường Công nghệ,KHDL,Khoa Khoa học dữ liệu và Trí tuệ nhân tạo,EP15,Khoa học dữ liệu,DS102,Nhập môn Trí tuệ nhân tạo,3
+SOT,Trường Công nghệ,TKT,Khoa Toán kinh tế,EP02,Toán Kinh tế,MA101,Toán cao cấp 1,3
+SOT,Trường Công nghệ,TKT,Khoa Toán kinh tế,EP02,Toán Kinh tế,MA102,Xác suất thống kê,3
+SOB,Trường Kinh doanh,QTKD,Khoa Quản trị kinh doanh,7340101,Quản trị kinh doanh,BM101,Quản trị học,3
+SOB,Trường Kinh doanh,QTKD,Khoa Quản trị kinh doanh,7340101,Quản trị kinh doanh,BM102,Quản trị chiến lược,3
+SOB,Trường Kinh doanh,QTKD,Khoa Quản trị kinh doanh,EP01,Khởi nghiệp và phát triển KD,BM201,Tinh thần khởi nghiệp,3
+SOB,Trường Kinh doanh,MKT,Khoa Marketing,7340115,Marketing,MK101,Marketing căn bản,3
+SOB,Trường Kinh doanh,MKT,Khoa Marketing,7340115,Marketing,MK102,Nghiên cứu Marketing,3
+SOB,Trường Kinh doanh,MKT,Khoa Marketing,7320108,Quan hệ công chúng,MK201,Tổ chức sự kiện,3
+SOB,Trường Kinh doanh,DLKS,Khoa Du lịch và Khách sạn,7810103,Quản trị khách sạn,HO101,Tổng quan du lịch và khách sạn,3
+SOB,Trường Kinh doanh,DLKS,Khoa Du lịch và Khách sạn,7810103,Quản trị khách sạn,HO102,Quản trị lễ tân,3
+SOB,Trường Kinh doanh,BDS,Khoa Bất động sản và Kinh tế tài nguyên,7340116,Bất động sản,RE101,Thị trường bất động sản,3
+SOB,Trường Kinh doanh,BDS,Khoa Bất động sản và Kinh tế tài nguyên,7340116,Bất động sản,RE102,Định giá bất động sản,3
+SOB,Trường Kinh doanh,VQTKD,Viện Quản trị kinh doanh,EP05,Kinh doanh số,EB101,Mô hình kinh doanh số,3
+SOB,Trường Kinh doanh,VTM,Viện Thương mại và Kinh tế quốc tế,7340120,Kinh doanh quốc tế,IB101,Kinh tế quốc tế,3
+SOB,Trường Kinh doanh,VTM,Viện Thương mại và Kinh tế quốc tế,7340124,Logistics và QLCUU,LG101,Quản trị chuỗi cung ứng,3
+SOE,Trường Kinh tế,KTH,Khoa Kinh tế học,7310101,Kinh tế học,EC101,Kinh tế vi mô 1,3
+SOE,Trường Kinh tế,KTH,Khoa Kinh tế học,7310101,Kinh tế học,EC102,Kinh tế vĩ mô 1,3
+SOE,Trường Kinh tế,KTH,Khoa Kinh tế học,7310101,Kinh tế học,EC201,Kinh tế lượng,3
+SOE,Trường Kinh tế,LUAT,Khoa Luật,7380101,Luật,LW101,Pháp luật đại cương,3
+SOE,Trường Kinh tế,LUAT,Khoa Luật,7380107,Luật kinh tế,LW102,Luật doanh nghiệp,3
+SOE,Trường Kinh tế,LUAT,Khoa Luật,7380107,Luật kinh tế,LW103,Luật thương mại quốc tế,3
+SOE,Trường Kinh tế,DTU,Khoa Đầu tư,7310104,Kinh tế đầu tư,IV101,Lập dự án đầu tư,3
+SOE,Trường Kinh tế,DTU,Khoa Đầu tư,7310104,Kinh tế đầu tư,IV102,Quản lý rủi ro đầu tư,3
+SOE,Trường Kinh tế,KHPT,Khoa Kế hoạch và Phát triển,7310105,Kinh tế phát triển,DP101,Kế hoạch hóa phát triển,3
+SOE,Trường Kinh tế,NNKT,Khoa Ngoại ngữ Kinh tế,7220201,Ngôn ngữ Anh,EN101,Tiếng Anh thương mại 1,3
+SOE,Trường Kinh tế,NNKT,Khoa Ngoại ngữ Kinh tế,7220201,Ngôn ngữ Anh,EN102,Tiếng Anh thương mại 2,3
+NEU_INST,Khối Viện Độc Lập,KTKT,Viện Kế toán - Kiểm toán,7340301,Kế toán,AC101,Nguyên lý kế toán,3
+NEU_INST,Khối Viện Độc Lập,KTKT,Viện Kế toán - Kiểm toán,7340301,Kế toán,AC102,Kế toán tài chính,3
+NEU_INST,Khối Viện Độc Lập,KTKT,Viện Kế toán - Kiểm toán,7340302,Kiểm toán,AC201,Kiểm toán căn bản,3
+NEU_INST,Khối Viện Độc Lập,NHTC,Viện Ngân hàng - Tài chính,7340201,Tài chính - Ngân hàng,FI101,Tài chính tiền tệ,3
+NEU_INST,Khối Viện Độc Lập,NHTC,Viện Ngân hàng - Tài chính,7340201,Tài chính - Ngân hàng,FI102,Tài chính doanh nghiệp,3
+NEU_INST,Khối Viện Độc Lập,NHTC,Viện Ngân hàng - Tài chính,EP09,Công nghệ tài chính,FT101,Nhập môn Fintech,3
+NEU_INST,Khối Viện Độc Lập,ISME,Viện Đào tạo Quốc tế,ISME01,Quản trị Kinh doanh Quốc tế,IBD101,Global Business,3
+SOT,Trường Công nghệ,CNTT,Viện Công nghệ thông tin và Kinh tế số,7480101,Khoa học máy tính,IT101,Tin học đại cương,3
+SOT,Trường Công nghệ,CNTT,Viện Công nghệ thông tin và Kinh tế số,7480101,Khoa học máy tính,IT102,Cấu trúc dữ liệu và giải thuật,3
+SOT,Trường Công nghệ,CNTT,Viện Công nghệ thông tin và Kinh tế số,7480101,Khoa học máy tính,IT103,Hệ quản trị Cơ sở dữ liệu,3
+SOT,Trường Công nghệ,CNTT,Viện Công nghệ thông tin và Kinh tế số,7480101,Khoa học máy tính,IT104,Lập trình Web nâng cao,3
+SOT,Trường Công nghệ,CNTT,Viện Công nghệ thông tin và Kinh tế số,7480101,Khoa học máy tính,IT105,Công nghệ phần mềm,3
+SOT,Trường Công nghệ,CNTT,Viện Công nghệ thông tin và Kinh tế số,7480201,Công nghệ thông tin,IT201,Mạng máy tính,3
+SOT,Trường Công nghệ,CNTT,Viện Công nghệ thông tin và Kinh tế số,7480201,Công nghệ thông tin,IT202,Hệ điều hành,3
+SOT,Trường Công nghệ,CNTT,Viện Công nghệ thông tin và Kinh tế số,7480201,Công nghệ thông tin,IT203,Điện toán đám mây,3
+SOT,Trường Công nghệ,CNTT,Viện Công nghệ thông tin và Kinh tế số,7480201,Công nghệ thông tin,IT204,Phát triển ứng dụng di động,3
+SOT,Trường Công nghệ,CNTT,Viện Công nghệ thông tin và Kinh tế số,7480202,An toàn thông tin,IT301,Mật mã học cơ sở,3
+SOT,Trường Công nghệ,CNTT,Viện Công nghệ thông tin và Kinh tế số,7480202,An toàn thông tin,IT302,An ninh mạng,3
+SOT,Trường Công nghệ,CNTT,Viện Công nghệ thông tin và Kinh tế số,7480202,An toàn thông tin,IT303,Phân tích mã độc,3
+SOT,Trường Công nghệ,HTTT,Khoa Hệ thống thông tin quản lý,7340405,Hệ thống thông tin quản lý,IS101,Phân tích thiết kế hệ thống,3
+SOT,Trường Công nghệ,HTTT,Khoa Hệ thống thông tin quản lý,7340405,Hệ thống thông tin quản lý,IS102,Quản trị dự án CNTT,3
+SOT,Trường Công nghệ,HTTT,Khoa Hệ thống thông tin quản lý,7340405,Hệ thống thông tin quản lý,IS103,Thương mại điện tử,3
+SOT,Trường Công nghệ,HTTT,Khoa Hệ thống thông tin quản lý,7340405,Hệ thống thông tin quản lý,IS104,Hệ thống hoạch định nguồn lực ERP,3
+SOT,Trường Công nghệ,KHDL,Khoa Khoa học dữ liệu và Trí tuệ nhân tạo,EP15,Khoa học dữ liệu,DS101,Toán cho học máy,3
+SOT,Trường Công nghệ,KHDL,Khoa Khoa học dữ liệu và Trí tuệ nhân tạo,EP15,Khoa học dữ liệu,DS102,Nhập môn Trí tuệ nhân tạo,3
+SOT,Trường Công nghệ,KHDL,Khoa Khoa học dữ liệu và Trí tuệ nhân tạo,EP15,Khoa học dữ liệu,DS103,Khai phá dữ liệu (Data Mining),3
+SOT,Trường Công nghệ,KHDL,Khoa Khoa học dữ liệu và Trí tuệ nhân tạo,EP15,Khoa học dữ liệu,DS104,Học sâu (Deep Learning),3
+SOT,Trường Công nghệ,TKT,Khoa Toán kinh tế,EP02,Toán Kinh tế,MA101,Toán cao cấp 1,3
+SOT,Trường Công nghệ,TKT,Khoa Toán kinh tế,EP02,Toán Kinh tế,MA102,Xác suất thống kê,3
+SOT,Trường Công nghệ,TKT,Khoa Toán kinh tế,EP02,Toán Kinh tế,MA103,Quy hoạch tuyến tính,3
+SOT,Trường Công nghệ,THKE,Khoa Thống kê,7310107,Thống kê kinh tế,ST101,Nguyên lý thống kê,3
+SOT,Trường Công nghệ,THKE,Khoa Thống kê,7310107,Thống kê kinh tế,ST102,Thống kê doanh nghiệp,3
+SOB,Trường Kinh doanh,QTKD,Khoa Quản trị kinh doanh,7340101,Quản trị kinh doanh,BM101,Quản trị học,3
+SOB,Trường Kinh doanh,QTKD,Khoa Quản trị kinh doanh,7340101,Quản trị kinh doanh,BM102,Quản trị chiến lược,3
+SOB,Trường Kinh doanh,QTKD,Khoa Quản trị kinh doanh,7340101,Quản trị kinh doanh,BM103,Văn hóa doanh nghiệp,3
+SOB,Trường Kinh doanh,QTKD,Khoa Quản trị kinh doanh,EP01,Khởi nghiệp và phát triển KD,BM201,Tinh thần khởi nghiệp,3
+SOB,Trường Kinh doanh,QTKD,Khoa Quản trị kinh doanh,EP01,Khởi nghiệp và phát triển KD,BM202,Quản trị đổi mới sáng tạo,3
+SOB,Trường Kinh doanh,MKT,Khoa Marketing,7340115,Marketing,MK101,Marketing căn bản,3
+SOB,Trường Kinh doanh,MKT,Khoa Marketing,7340115,Marketing,MK102,Nghiên cứu Marketing,3
+SOB,Trường Kinh doanh,MKT,Khoa Marketing,7340115,Marketing,MK103,Marketing kỹ thuật số (Digital Marketing),3
+SOB,Trường Kinh doanh,MKT,Khoa Marketing,7320108,Quan hệ công chúng,MK201,Tổ chức sự kiện,3
+SOB,Trường Kinh doanh,MKT,Khoa Marketing,7320108,Quan hệ công chúng,MK202,Xử lý khủng hoảng truyền thông,3
+SOB,Trường Kinh doanh,DLKS,Khoa Du lịch và Khách sạn,7810103,Quản trị khách sạn,HO101,Tổng quan du lịch và khách sạn,3
+SOB,Trường Kinh doanh,DLKS,Khoa Du lịch và Khách sạn,7810103,Quản trị khách sạn,HO102,Quản trị lễ tân,3
+SOB,Trường Kinh doanh,DLKS,Khoa Du lịch và Khách sạn,7810101,Quản trị dịch vụ du lịch và lữ hành,TO101,Thiết kế và điều hành tour,3
+SOB,Trường Kinh doanh,BDS,Khoa Bất động sản và Kinh tế tài nguyên,7340116,Bất động sản,RE101,Thị trường bất động sản,3
+SOB,Trường Kinh doanh,BDS,Khoa Bất động sản và Kinh tế tài nguyên,7340116,Bất động sản,RE102,Định giá bất động sản,3
+SOB,Trường Kinh doanh,BDS,Khoa Bất động sản và Kinh tế tài nguyên,7340116,Bất động sản,RE103,Đầu tư kinh doanh bất động sản,3
+SOB,Trường Kinh doanh,VQTKD,Viện Quản trị kinh doanh,EP05,Kinh doanh số,EB101,Mô hình kinh doanh số,3
+SOB,Trường Kinh doanh,VQTKD,Viện Quản trị kinh doanh,EP05,Kinh doanh số,EB102,Chuyển đổi số trong doanh nghiệp,3
+SOB,Trường Kinh doanh,VTM,Viện Thương mại và Kinh tế quốc tế,7340120,Kinh doanh quốc tế,IB101,Kinh tế quốc tế,3
+SOB,Trường Kinh doanh,VTM,Viện Thương mại và Kinh tế quốc tế,7340120,Kinh doanh quốc tế,IB102,Giao dịch thương mại quốc tế,3
+SOB,Trường Kinh doanh,VTM,Viện Thương mại và Kinh tế quốc tế,7340124,Logistics và QLCUU,LG101,Quản trị chuỗi cung ứng,3
+SOB,Trường Kinh doanh,VTM,Viện Thương mại và Kinh tế quốc tế,7340124,Logistics và QLCUU,LG102,Quản trị kho hàng và phân phối,3
+SOE,Trường Kinh tế,KTH,Khoa Kinh tế học,7310101,Kinh tế học,EC101,Kinh tế vi mô 1,3
+SOE,Trường Kinh tế,KTH,Khoa Kinh tế học,7310101,Kinh tế học,EC102,Kinh tế vĩ mô 1,3
+SOE,Trường Kinh tế,KTH,Khoa Kinh tế học,7310101,Kinh tế học,EC103,Kinh tế vi mô 2,3
+SOE,Trường Kinh tế,KTH,Khoa Kinh tế học,7310101,Kinh tế học,EC201,Kinh tế lượng,3
+SOE,Trường Kinh tế,LUAT,Khoa Luật,7380101,Luật,LW101,Pháp luật đại cương,3
+SOE,Trường Kinh tế,LUAT,Khoa Luật,7380107,Luật kinh tế,LW102,Luật doanh nghiệp,3
+SOE,Trường Kinh tế,LUAT,Khoa Luật,7380107,Luật kinh tế,LW103,Luật thương mại quốc tế,3
+SOE,Trường Kinh tế,LUAT,Khoa Luật,7380107,Luật kinh tế,LW104,Pháp luật hợp đồng,3
+SOE,Trường Kinh tế,DTU,Khoa Đầu tư,7310104,Kinh tế đầu tư,IV101,Lập dự án đầu tư,3
+SOE,Trường Kinh tế,DTU,Khoa Đầu tư,7310104,Kinh tế đầu tư,IV102,Quản lý rủi ro đầu tư,3
+SOE,Trường Kinh tế,DTU,Khoa Đầu tư,7310104,Kinh tế đầu tư,IV103,Thẩm định dự án đầu tư,3
+SOE,Trường Kinh tế,KHPT,Khoa Kế hoạch và Phát triển,7310105,Kinh tế phát triển,DP101,Kế hoạch hóa phát triển,3
+SOE,Trường Kinh tế,KHPT,Khoa Kế hoạch và Phát triển,7310105,Kinh tế phát triển,DP102,Chính sách công,3
+SOE,Trường Kinh tế,NNKT,Khoa Ngoại ngữ Kinh tế,7220201,Ngôn ngữ Anh,EN101,Tiếng Anh thương mại 1,3
+SOE,Trường Kinh tế,NNKT,Khoa Ngoại ngữ Kinh tế,7220201,Ngôn ngữ Anh,EN102,Tiếng Anh thương mại 2,3
+SOE,Trường Kinh tế,NNKT,Khoa Ngoại ngữ Kinh tế,7220201,Ngôn ngữ Anh,EN103,Giao tiếp kinh doanh đa văn hóa,3
+SOE,Trường Kinh tế,KHQL,Khoa Khoa học Quản lý,7340401,Khoa học quản lý,MN101,Quản lý nhà nước về kinh tế,3
+SOE,Trường Kinh tế,KHQL,Khoa Khoa học Quản lý,7340401,Khoa học quản lý,MN102,Quản lý chất lượng toàn diện (TQM),3
+SOE,Trường Kinh tế,LLCT,Khoa Lý luận Chính trị,LLCT01,Lý luận Chính trị,PL101,Triết học Mác - Lênin,3
+SOE,Trường Kinh tế,LLCT,Khoa Lý luận Chính trị,LLCT01,Lý luận Chính trị,PL102,Kinh tế chính trị Mác - Lênin,2
+SOE,Trường Kinh tế,LLCT,Khoa Lý luận Chính trị,LLCT01,Lý luận Chính trị,PL103,Lịch sử Đảng Cộng sản Việt Nam,2
+NEU_INST,Khối Viện Độc Lập,KTKT,Viện Kế toán - Kiểm toán,7340301,Kế toán,AC101,Nguyên lý kế toán,3
+NEU_INST,Khối Viện Độc Lập,KTKT,Viện Kế toán - Kiểm toán,7340301,Kế toán,AC102,Kế toán tài chính,3
+NEU_INST,Khối Viện Độc Lập,KTKT,Viện Kế toán - Kiểm toán,7340301,Kế toán,AC103,Kế toán quản trị,3
+NEU_INST,Khối Viện Độc Lập,KTKT,Viện Kế toán - Kiểm toán,7340302,Kiểm toán,AC201,Kiểm toán căn bản,3
+NEU_INST,Khối Viện Độc Lập,KTKT,Viện Kế toán - Kiểm toán,7340302,Kiểm toán,AC202,Kiểm toán nội bộ,3
+NEU_INST,Khối Viện Độc Lập,NHTC,Viện Ngân hàng - Tài chính,7340201,Tài chính - Ngân hàng,FI101,Tài chính tiền tệ,3
+NEU_INST,Khối Viện Độc Lập,NHTC,Viện Ngân hàng - Tài chính,7340201,Tài chính - Ngân hàng,FI102,Tài chính doanh nghiệp,3
+NEU_INST,Khối Viện Độc Lập,NHTC,Viện Ngân hàng - Tài chính,7340201,Tài chính - Ngân hàng,FI103,Nghiệp vụ ngân hàng thương mại,3
+NEU_INST,Khối Viện Độc Lập,NHTC,Viện Ngân hàng - Tài chính,EP09,Công nghệ tài chính,FT101,Nhập môn Fintech,3
+NEU_INST,Khối Viện Độc Lập,NHTC,Viện Ngân hàng - Tài chính,EP09,Công nghệ tài chính,FT102,Blockchain và Ứng dụng,3
+NEU_INST,Khối Viện Độc Lập,ISME,Viện Đào tạo Quốc tế,ISME01,Quản trị Kinh doanh Quốc tế,IBD101,Global Business,3
+NEU_INST,Khối Viện Độc Lập,ISME,Viện Đào tạo Quốc tế,ISME01,Quản trị Kinh doanh Quốc tế,IBD102,Cross-cultural Management,3
+NEU_INST,Khối Viện Độc Lập,AEP,Viện Đào tạo Tiên tiến CLC và POHE,AEP01,Tài chính tiên tiến,AEP101,Corporate Finance (Advanced),3
+NEU_INST,Khối Viện Độc Lập,AEP,Viện Đào tạo Tiên tiến CLC và POHE,AEP02,Kế toán tiên tiến,AEP201,Financial Accounting (Advanced),3

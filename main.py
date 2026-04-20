@@ -1,5 +1,5 @@
 from app import create_app, db
-from app.models import HocPhan, User, seed_data
+from app.models import HocPhan,User
 
 app = create_app()
 
@@ -16,8 +16,7 @@ with app.app_context():
         print("✅ Đã tạo 2 tài khoản: user (123456) và admin (123456)")
 
     # Kiểm tra xem đã có dữ liệu chưa
-    if not HocPhan.query.first():
-        seed_data(db)
+
 
 if __name__ == '__main__':
     app.run(debug=True)
