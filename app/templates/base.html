@@ -55,7 +55,12 @@
                         <a href="{{ url_for('course.login') }}" class="btn-login"><i class="fa-solid fa-sign-in-alt me-2"></i>Đăng nhập</a>
                     {% endif %}
 
-                    <a href="#" class="icon-link" title="Bookmarks"><i class="fa-regular fa-bookmark"></i></a>
+                    <a href="{{ url_for('course.favorite_list_page') }}" class="icon-link position-relative" title="Danh sách yêu thích">
+                        <i class="fa-regular fa-bookmark"></i>
+                        {% if session.get('favorite_majors') %}
+                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.62rem;">{{ session.get('favorite_majors')|length }}</span>
+                        {% endif %}
+                    </a>
                 </div>
 
             </div>

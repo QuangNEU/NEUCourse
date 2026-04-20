@@ -182,7 +182,7 @@ function renderTable(data) {
                 <td><span class="fw-bold text-primary">${item.ma}</span></td>
                 <td><a href="/faculty/${item.id}" class="text-decoration-none text-dark fw-medium">${item.ten}</a></td>
                 <td>${item.truong}</td>
-                <td><span class="badge rounded-pill bg-info text-dark">${item.count_nganh}</span></td>
+                <td>${item.count_nganh}</td>
             </tr>
         `).join('');
     } else if (state.currentTab === 'truong') {
@@ -191,7 +191,7 @@ function renderTable(data) {
             <tr>
                 <td><span class="fw-bold text-primary">${item.ma}</span></td>
                 <td><a href="/school/${item.id}" class="text-decoration-none text-dark fw-medium">${item.ten}</a></td>
-                <td><span class="badge rounded-pill bg-info text-dark">${item.count_khoa}</span></td>
+                <td>${item.count_khoa}</td>
             </tr>
         `).join('');
     }
