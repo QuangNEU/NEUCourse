@@ -25,7 +25,12 @@ def login():
             session['username'] = user.username
             session['ho_ten'] = user.ho_ten
             session['vai_tro'] = user.vai_tro
-            return redirect(url_for('course.home'))
+            
+            # Redirect dựa trên vai trò
+            if user.vai_tro == 'Admin':
+                return redirect(url_for('course.admin'))
+            else:
+                return redirect(url_for('course.home'))
         else:
             return render_template('login.html', error='Tên đăng nhập hoặc mật khẩu không chính xác!')
 
@@ -201,3 +206,234 @@ def course_detail(id):
     # Lấy đề cương mới nhất
     syllabus = DeCuongChiTiet.query.filter_by(hoc_phan_id=id).order_by(DeCuongChiTiet.nam_ap_dung.desc()).first()
     return render_template('syllabus.html', course=course, syllabus=syllabus)
+
+
+# ==============================================================
+# ADMIN ROUTES
+# ==============================================================
+
+def check_admin():
+    """Kiểm tra xem user có phải admin không"""
+    if not session.get('user_id') or session.get('vai_tro') != 'Admin':
+        return False
+    return True
+
+
+@course_bp.route('/admin', methods=['GET'])
+def admin():
+    if not check_admin():
+        return redirect(url_for('course.login'))
+    return render_template('admin_dashboard.html')
+
+
+@course_bp.route('/admin/schools', methods=['GET'])
+def admin_schools():
+    if not check_admin():
+        return redirect(url_for('course.login'))
+    return render_template('admin_schools.html')
+
+
+@course_bp.route('/admin/schools/create', methods=['GET', 'POST'])
+def admin_school_create():
+    if not check_admin():
+        return redirect(url_for('course.login'))
+    
+    if request.method == 'POST':
+        ma = request.form.get('ma_truong')
+        ten = request.form.get('ten_truong')
+        
+        if not ma or not ten:
+            return render_template('admin_school_form.html', error='Vui lòng nhập đầy đủ thông tin')
+        
+        school = Truong(ma_truong=ma, ten_truong=ten)
+        db.session.add(school)
+        db.session.commit()
+        return redirect(url_for('course.admin_schools'))
+    
+    return render_template('admin_school_form.html')
+
+
+@course_bp.route('/admin/schools/<int:id>/edit', methods=['GET', 'POST'])
+def admin_school_edit(id):
+    if not check_admin():
+        return redirect(url_for('course.login'))
+    
+    school = Truong.query.get_or_404(id)
+    
+    if request.method == 'POST':
+        school.ma_truong = request.form.get('ma_truong', school.ma_truong)
+        school.ten_truong = request.form.get('ten_truong', school.ten_truong)
+        db.session.commit()
+        return redirect(url_for('course.admin_schools'))
+    
+    return render_template('admin_school_form.html', school=school)
+
+
+@course_bp.route('/admin/schools/<int:id>', methods=['GET'])
+def admin_school_detail(id):
+    if not check_admin():
+        return redirect(url_for('course.login'))
+    
+    school = Truong.query.get_or_404(id)
+    return render_template('admin_school_detail.html', school=school)
+
+
+@course_bp.route('/admin/schools/<int:school_id>/faculties/create', methods=['GET', 'POST'])
+def admin_faculty_create_in_school(school_id):
+    if not check_admin():
+        return redirect(url_for('course.login'))
+    
+    school = Truong.query.get_or_404(school_id)
+    
+    if request.method == 'POST':
+        ma = request.form.get('ma_khoa')
+        ten = request.form.get('ten_khoa')
+        
+        if not ma or not ten:
+            return render_template('admin_faculty_form_in_school.html', school=school, error='Vui lòng nhập đầy đủ')
+        
+        faculty = KhoaVien(truong_id=school_id, ma_khoa=ma, ten_khoa=ten)
+        db.session.add(faculty)
+        db.session.commit()
+        return redirect(url_for('course.admin_school_detail', id=school_id))
+    
+    return render_template('admin_faculty_form_in_school.html', school=school)
+
+
+@course_bp.route('/admin/faculties/<int:faculty_id>/edit', methods=['GET', 'POST'])
+def admin_faculty_edit(faculty_id):
+    if not check_admin():
+        return redirect(url_for('course.login'))
+    
+    faculty = KhoaVien.query.get_or_404(faculty_id)
+    
+    if request.method == 'POST':
+        faculty.ma_khoa = request.form.get('ma_khoa', faculty.ma_khoa)
+        faculty.ten_khoa = request.form.get('ten_khoa', faculty.ten_khoa)
+        db.session.commit()
+        return redirect(url_for('course.admin_school_detail', id=faculty.truong_id))
+    
+    return render_template('admin_faculty_form_in_school.html', school=faculty.truong, faculty=faculty)
+
+
+@course_bp.route('/api/admin/stats', methods=['GET'])
+def admin_stats():
+    if not check_admin():
+        return jsonify({"error": "Unauthorized"}), 401
+    
+    return jsonify({
+        "schools": Truong.query.count(),
+        "faculties": KhoaVien.query.count(),
+        "majors": NganhHoc.query.count(),
+        "courses": HocPhan.query.count()
+    })
+
+
+@course_bp.route('/api/admin/schools/<int:id>', methods=['DELETE'])
+def admin_delete_school(id):
+    if not check_admin():
+        return jsonify({"error": "Unauthorized"}), 401
+    
+    school = Truong.query.get_or_404(id)
+    db.session.delete(school)
+    db.session.commit()
+    return jsonify({"status": "success"})
+
+
+@course_bp.route('/api/admin/faculties', methods=['GET'])
+def admin_list_faculties():
+    if not check_admin():
+        return jsonify({"error": "Unauthorized"}), 401
+    
+    page = request.args.get('page', 1, type=int)
+    faculties = KhoaVien.query.paginate(page=page, per_page=20, error_out=False)
+    
+    return jsonify({
+        "status": "success",
+        "total": faculties.total,
+        "pages": faculties.pages,
+        "current_page": faculties.page,
+        "data": [{
+            "id": f.id,
+            "ma": f.ma_khoa,
+            "ten": f.ten_khoa,
+            "truong": f.truong.ten_truong if f.truong else "",
+            "count_nganh": len(f.nganhs)
+        } for f in faculties.items]
+    })
+
+
+@course_bp.route('/admin/faculties', methods=['GET'])
+def admin_faculties():
+    if not check_admin():
+        return redirect(url_for('course.login'))
+    return render_template('admin_faculties.html')
+
+
+@course_bp.route('/admin/majors', methods=['GET'])
+def admin_majors():
+    if not check_admin():
+        return redirect(url_for('course.login'))
+    return render_template('admin_majors.html')
+
+
+@course_bp.route('/admin/courses', methods=['GET'])
+def admin_courses():
+    if not check_admin():
+        return redirect(url_for('course.login'))
+    return render_template('admin_courses.html')
+
+
+@course_bp.route('/admin/users', methods=['GET'])
+def admin_users():
+    if not check_admin():
+        return redirect(url_for('course.login'))
+    
+    users = User.query.all()
+    return render_template('admin_users.html', users=users)
+
+
+@course_bp.route('/admin/school/create', methods=['GET'])
+def admin_school_create_page():
+    if not check_admin():
+        return redirect(url_for('course.login'))
+    return render_template('admin_school_form.html')
+
+
+@course_bp.route('/admin/faculty/create', methods=['GET'])
+def admin_faculty_create():
+    if not check_admin():
+        return redirect(url_for('course.login'))
+    return render_template('admin_faculty_form.html')
+
+
+@course_bp.route('/admin/major/create', methods=['GET'])
+def admin_major_create():
+    if not check_admin():
+        return redirect(url_for('course.login'))
+    return render_template('admin_major_form.html')
+
+
+@course_bp.route('/admin/course/create', methods=['GET'])
+def admin_course_create():
+    if not check_admin():
+        return redirect(url_for('course.login'))
+    return render_template('admin_course_form.html')
+
+
+@course_bp.route('/admin/user/create', methods=['GET'])
+def admin_user_create():
+    if not check_admin():
+        return redirect(url_for('course.login'))
+    return render_template('admin_user_form.html')
+
+
+@course_bp.route('/api/admin/faculties/<int:id>', methods=['DELETE'])
+def admin_delete_faculty(id):
+    if not check_admin():
+        return jsonify({"error": "Unauthorized"}), 401
+    
+    faculty = KhoaVien.query.get_or_404(id)
+    db.session.delete(faculty)
+    db.session.commit()
+    return jsonify({"status": "success"})

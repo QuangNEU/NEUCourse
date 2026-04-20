@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}Thêm Học phần - Admin{% endblock %}
+
+{% block content %}
+<div class="form-container" style="max-width: 600px; margin: 50px auto; background: white; padding: 40px; border-radius: 12px;">
+    <h1>Thêm Học phần</h1>
+    <form method="POST">
+        <div class="form-group" style="margin-bottom: 20px;">
+            <label>Mã Học phần</label>
+            <input type="text" name="ma_hoc_phan" required style="width: 100%; padding: 10px; border: 1px solid #DDD; border-radius: 8px;" />
+        </div>
+        <div class="form-group" style="margin-bottom: 20px;">
+            <label>Tên Học phần</label>
+            <input type="text" name="ten_hoc_phan" required style="width: 100%; padding: 10px; border: 1px solid #DDD; border-radius: 8px;" />
+        </div>
+        <div class="form-group" style="margin-bottom: 20px;">
+            <label>Số tín chỉ</label>
+            <input type="number" name="so_tin_chi" required style="width: 100%; padding: 10px; border: 1px solid #DDD; border-radius: 8px;" />
+        </div>
+        <button type="submit" class="btn btn-primary">Thêm</button>
+    </form>
+</div>
+{% endblock %}
+

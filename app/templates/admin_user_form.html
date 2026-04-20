@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block title %}Thêm Người dùng - Admin{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-container {
+        max-width: 600px;
+        margin: 50px auto;
+        background: white;
+        padding: 40px;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+    }
+
+    .form-group input,
+    .form-group select {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #DDD;
+        border-radius: 8px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <h1><i class="fa-solid fa-user-plus me-2"></i>Thêm Người dùng</h1>
+    <form method="POST">
+        <div class="form-group">
+            <label>Username</label>
+            <input type="text" name="username" required />
+        </div>
+        <div class="form-group">
+            <label>Mật khẩu</label>
+            <input type="password" name="password" required />
+        </div>
+        <div class="form-group">
+            <label>Họ tên</label>
+            <input type="text" name="ho_ten" required />
+        </div>
+        <div class="form-group">
+            <label>Vai trò</label>
+            <select name="vai_tro">
+                <option value="User">Người dùng</option>
+                <option value="Admin">Quản trị viên</option>
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary">Thêm</button>
+    </form>
+</div>
+{% endblock %}
+
