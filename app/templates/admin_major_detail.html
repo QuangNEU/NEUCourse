@@ -1,0 +1,1029 @@
+{% extends "base.html" %}
+
+{% block title %}Chi tiết Ngành - Admin - {{ major.ten_nganh }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-header { background-color: var(--neu-blue); color: white; padding: 30px 0; margin-bottom: 30px; }
+    .breadcrumb-item + .breadcrumb-item::before { color: rgba(255, 255, 255, 0.6); }
+    .breadcrumb-item a { color: rgba(255, 255, 255, 0.8); text-decoration: none; }
+    .breadcrumb-item.active { color: white; font-weight: bold; }
+
+    .curriculum-info { background-color: transparent; border-left: none; padding: 20px 0; margin-bottom: 0; border-radius: 0; }
+    .curriculum-table th { background-color: var(--neu-blue); color: white; text-align: center; vertical-align: middle; font-weight: 600; border: 1px solid #ddd; }
+    .curriculum-table td { vertical-align: middle; border: 1px solid #ddd; }
+    .group-header { background-color: #e9ecef !important; font-weight: bold; color: var(--neu-blue); }
+    .total-row { background-color: #fff3cd !important; font-weight: bold; }
+    .text-center { text-align: center; }
+    .semester-col { width: 40px; text-align: center; }
+
+    /* Form Styles */
+    .form-card {
+        background: transparent;
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: none;
+        margin-bottom: 30px;
+    }
+
+    .form-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 15px;
+        margin-bottom: 15px;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .form-group label {
+        font-weight: 600;
+        margin-bottom: 6px;
+        color: var(--text-main);
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .form-group label i {
+        color: var(--neu-blue);
+        font-size: 0.95rem;
+    }
+
+    .form-group input,
+    .form-group select {
+        padding: 8px 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+        font-family: inherit;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+        outline: none;
+        border-color: var(--neu-blue);
+        box-shadow: 0 0 0 3px rgba(13, 66, 118, 0.1);
+    }
+
+    .form-group small {
+        font-size: 0.8rem;
+        color: #6c757d;
+        margin-top: 4px;
+    }
+
+    .form-actions {
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+    }
+
+    .btn-submit, .btn-cancel, .btn-edit, .btn-back {
+        padding: 8px 16px;
+        border: none;
+        border-radius: 6px;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .btn-submit {
+        background-color: var(--neu-blue);
+        color: white;
+    }
+
+    .btn-submit:hover {
+        background-color: #0652A3;
+        transform: translateY(-1px);
+    }
+
+    .btn-cancel, .btn-back {
+        background-color: #6c757d;
+        color: white;
+    }
+
+    .btn-cancel:hover, .btn-back:hover {
+        background-color: #5a6268;
+        transform: translateY(-1px);
+    }
+
+    .btn-edit {
+        background-color: var(--neu-blue);
+        color: white;
+    }
+
+    .btn-edit:hover {
+        background-color: #0652A3;
+        transform: translateY(-1px);
+    }
+
+    .error-alert {
+        background-color: #f8d7da;
+        color: #721c24;
+        padding: 12px;
+        border-radius: 4px;
+        margin-bottom: 20px;
+        border-left: 4px solid #f5c6cb;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .error-alert i {
+        color: #dc3545;
+    }
+
+    .success-alert {
+        background-color: #d4edda;
+        color: #155724;
+        padding: 12px;
+        border-radius: 4px;
+        margin-bottom: 20px;
+        border-left: 4px solid #c3e6cb;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .section-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--text-main);
+        margin-top: 20px;
+        margin-bottom: 15px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #e0e0e0;
+    }
+
+    .select2-container {
+        width: 100% !important;
+    }
+
+    .select2-container--default .select2-selection--single {
+        border: 1px solid #ddd !important;
+        border-radius: 4px !important;
+        height: auto !important;
+        padding: 6px 8px !important;
+        font-size: 0.9rem !important;
+    }
+
+    .select2-container--default .select2-selection--single:focus {
+        border-color: var(--neu-blue) !important;
+        box-shadow: 0 0 0 3px rgba(13, 66, 118, 0.1) !important;
+    }
+
+    .form-section {
+        padding: 20px;
+        margin-bottom: 20px;
+        background-color: #f9f9f9;
+        border-radius: 8px;
+        border-left: 4px solid var(--neu-blue);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .form-section:first-of-type {
+        background-color: #ffffff;
+        border-left: 4px solid var(--neu-blue);
+    }
+
+    .stats-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        padding: 15px 0;
+    }
+
+    .stat-item {
+        background-color: #ffffff;
+        padding: 15px;
+        border-radius: 6px;
+        border: 1px solid #e0e0e0;
+        transition: all 0.3s ease;
+    }
+
+    .stat-item:hover {
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .stat-label {
+        font-size: 0.85rem;
+        color: #666;
+        margin-bottom: 8px;
+        font-weight: 500;
+    }
+
+    .stat-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--neu-blue);
+    }
+
+    .version-section {
+        display: flex;
+        gap: 15px;
+        align-items: flex-end;
+    }
+
+    .version-select-group {
+        flex: 1;
+        min-width: 250px;
+    }
+
+    .version-select-group label {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 8px;
+        color: var(--text-main);
+        font-size: 0.9rem;
+    }
+
+    .btn-create-version {
+        background: linear-gradient(135deg, #FFC107 0%, #FFB300 100%);
+        color: #333;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 6px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        box-shadow: 0 2px 6px rgba(255, 193, 7, 0.3);
+        height: 40px;
+    }
+
+    .btn-create-version:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(255, 193, 7, 0.4);
+        background: linear-gradient(135deg, #FFB300 0%, #FFA000 100%);
+    }
+
+    .btn-create-version i {
+        font-size: 1rem;
+    }
+
+    .btn-success.btn-sm {
+ background: linear-gradient(135deg, #FFC107 0%, #FFB300 100%);
+        color: #333;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 6px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        box-shadow: 0 2px 6px rgba(255, 193, 7, 0.3);
+        height: 40px;
+    }
+
+    .btn-success.btn-sm:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(255, 193, 7, 0.4);
+        background: linear-gradient(135deg, #FFB300 0%, #FFA000 100%);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-2">
+                <li class="breadcrumb-item"><a href="/"><i class="fa-solid fa-home"></i> Trang chủ</a></li>
+                <li class="breadcrumb-item"><a href="/admin/majors">Quản lý Ngành</a></li>
+                <li class="breadcrumb-item active">{{ major.ten_nganh }}</li>
+            </ol>
+        </nav>
+        <h2 class="fw-bold mb-0"><i class="fa-solid fa-graduation-cap"></i> {{ major.ten_nganh }}</h2>
+    </div>
+</div>
+
+<div class="container mb-5">
+    {% if error %}
+    <div class="error-alert">
+        <i class="fa-solid fa-circle-exclamation"></i>{{ error }}
+    </div>
+    {% endif %}
+
+    <!-- Main Form Section - All in One Card -->
+    <form method="POST">
+        <div class="form-card">
+            <!-- Section 1: Thông tin Ngành -->
+            <div class="form-section">
+                <div class="section-title">
+                    <i class="fa-solid fa-edit"></i> Thông tin Ngành
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="ma_nganh">
+                            <i class="fa-solid fa-code"></i>
+                            <span>Mã Ngành</span>
+                        </label>
+                        <input id="ma_nganh" type="text" name="ma_nganh" value="{{ major.ma_nganh }}" placeholder="VD: 7480101" required />
+                        <small>Mã số chính thức của ngành học</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="ten_nganh">
+                            <i class="fa-solid fa-heading"></i>
+                            <span>Tên Ngành</span>
+                        </label>
+                        <input id="ten_nganh" type="text" name="ten_nganh" value="{{ major.ten_nganh }}" placeholder="VD: Khoa học máy tính" required />
+                        <small>Tên đầy đủ của ngành học</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="khoa_id">
+                            <i class="fa-solid fa-sitemap"></i>
+                            <span>Khoa/Viện</span>
+                        </label>
+                        <select name="khoa_id" id="khoa_id" data-selected-id="{{ major.khoa_id }}" required>
+                            <option value="">-- Chọn Khoa/Viện --</option>
+                        </select>
+                        <small>Lựa chọn khoa/viện quản lý ngành này</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="divider"></div>
+
+            <!-- Section 2: Chọn Phiên Bản Chương Trình -->
+            <div class="form-section">
+                <div class="section-title">
+                    <i class="fa-solid fa-clone"></i> Chọn Phiên Bản Chương Trình
+                </div>
+                <div class="version-section">
+                    <div class="version-select-group">
+                        <label for="versionSelect"><i class="fa-solid fa-code" style="color: var(--neu-blue);"></i> Phiên Bản</label>
+                        <select id="versionSelect" class="form-control" onchange="switchVersion()">
+                            <option value="">-- Chọn Phiên Bản --</option>
+                        </select>
+                    </div>
+                    <button type="button" class="btn-create-version" onclick="openCreateVersionModal()">
+                        <i class="fa-solid fa-plus"></i> Tạo Mới
+                    </button>
+                    <button type="button" class="btn-create-version" style="background: linear-gradient(135deg, #DC3545 0%, #C82333 100%); box-shadow: 0 2px 6px rgba(220, 53, 69, 0.3);" onclick="deleteCurrentVersion(); ">
+                        <i class="fa-solid fa-trash"></i> Xóa
+                    </button>
+                </div>
+            </div>
+
+            <div class="divider"></div>
+
+            <!-- Section 3 & 4: Thống kê & Chương trình đào tạo -->
+            <div class="form-section">
+                <div class="section-title">
+                    <i class="fa-solid fa-chart-bar"></i> Thống kê Chương trình
+                </div>
+                <div class="stats-row">
+                    <div class="stat-item">
+                        <div class="stat-label">Khoa/Viện</div>
+                        <div class="stat-value">{{ major.khoa.ten_khoa if major.khoa else 'Chưa gán' }}</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Phiên bản áp dụng</div>
+                        <div class="stat-value">{% if version %}{{ version.ma_phien_ban }}{% else %}<span style="color: #dc3545;">Chưa có</span>{% endif %}</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Năm bắt đầu</div>
+                        <div class="stat-value">{% if version %}{{ version.nam_bat_dau }}{% else %}-{% endif %}</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Tổng số tín chỉ</div>
+                        <div class="stat-value" style="color: #dc3545;">{{ total_credits }} TC</div>
+                    </div>
+                </div>
+
+                <div class="divider"></div>
+
+                <div class="section-title">
+                    <i class="fa-solid fa-table"></i> Chương trình đào tạo
+                </div>
+
+                {% if not version %}
+                <div class="alert alert-warning" role="alert">
+                    <i class="fa-solid fa-exclamation-triangle"></i> Vui lòng tạo phiên bản chương trình trước khi thêm học phần.
+                </div>
+                {% else %}
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div class="input-group" style="width: 300px;">
+                        <input type="text" class="form-control" placeholder="Tìm kiếm học phần..." id="searchInput">
+                        <button class="btn btn-primary" type="button"><i class="fa-solid fa-search"></i></button>
+                    </div>
+                    <button class="btn btn-success btn-sm" onclick="openAddCourseModal()">
+                        <i class="fa-solid fa-plus"></i> Thêm Học Phần
+                    </button>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover curriculum-table" id="curriculumTable">
+                        <thead>
+                            <tr>
+                                <th rowspan="2" style="width: 50px;">STT</th>
+                                <th rowspan="2" style="width: 100px;">Mã HP</th>
+                                <th rowspan="2">Tên học phần</th>
+                                <th rowspan="2" style="width: 60px;">Số TC</th>
+                                <th colspan="8">Phân bổ theo học kỳ</th>
+                                <th rowspan="2" style="width: 150px;">Khoa/Viện quản lý</th>
+                                <th rowspan="2" style="width: 100px;">Ghi chú</th>
+                                <th rowspan="2" style="width: 50px;">Hành động</th>
+                            </tr>
+                            <tr>
+                                <th class="semester-col">1</th><th class="semester-col">2</th><th class="semester-col">3</th><th class="semester-col">4</th>
+                                <th class="semester-col">5</th><th class="semester-col">6</th><th class="semester-col">7</th><th class="semester-col">8</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if curriculum_list %}
+                                {% set ns = namespace(stt=1, tc_chung=0, tc_chuyen=0, tc_tuychon=0) %}
+
+                                <tr class="group-header"><td colspan="16">I. Khối kiến thức chung (Bắt buộc)</td></tr>
+
+                                {% for item in curriculum_list %}
+                                    {% if item.hoc_phan.khoa_quan_ly.ma_khoa == 'K_CHUNG' %}
+                                    <tr>
+                                        <td class="text-center">{{ ns.stt }}</td>
+                                        <td class="text-center fw-bold text-primary">{{ item.hoc_phan.ma_hoc_phan }}</td>
+                                        <td><a href="/course/{{ item.hoc_phan.id }}" class="text-decoration-none text-dark">{{ item.hoc_phan.ten_hoc_phan }}</a></td>
+                                        <td class="text-center">{{ item.hoc_phan.so_tin_chi }}</td>
+
+                                        {% for semester in range(1, 9) %}
+                                            <td class="text-center">
+                                                {% if item.hoc_ky_du_kien == semester %}<i class="fa-solid fa-check text-success"></i>{% endif %}
+                                            </td>
+                                        {% endfor %}
+
+                                        <td class="small">{{ item.hoc_phan.khoa_quan_ly.ten_khoa }}</td>
+                                        <td class="small text-muted">{{ item.loai_mon }}</td>
+                                        <td class="text-center">
+                                            <button class="btn btn-danger btn-sm" onclick="deleteCurriculum({{ version.id }}, {{ item.hoc_phan_id }})">
+                                                <i class="fa-solid fa-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    {% set ns.stt = ns.stt + 1 %}
+                                    {% set ns.tc_chung = ns.tc_chung + item.hoc_phan.so_tin_chi %}
+                                    {% endif %}
+                                {% endfor %}
+
+                                <tr class="total-row">
+                                    <td colspan="4" class="text-end">Cộng (I):</td>
+                                    <td class="text-center">{{ ns.tc_chung }}</td>
+                                    <td colspan="10"></td>
+                                </tr>
+
+                                <tr class="group-header"><td colspan="16">II. Khối kiến thức chuyên ngành (Bắt buộc)</td></tr>
+
+                                {% for item in curriculum_list %}
+                                    {% if item.hoc_phan.khoa_quan_ly.ma_khoa != 'K_CHUNG' and item.loai_mon != 'Tự chọn' %}
+                                    <tr>
+                                        <td class="text-center">{{ ns.stt }}</td>
+                                        <td class="text-center fw-bold text-primary">{{ item.hoc_phan.ma_hoc_phan }}</td>
+                                        <td><a href="/course/{{ item.hoc_phan.id }}" class="text-decoration-none text-dark">{{ item.hoc_phan.ten_hoc_phan }}</a></td>
+                                        <td class="text-center">{{ item.hoc_phan.so_tin_chi }}</td>
+
+                                        {% for semester in range(1, 9) %}
+                                            <td class="text-center">
+                                                {% if item.hoc_ky_du_kien == semester %}<i class="fa-solid fa-check text-success"></i>{% endif %}
+                                            </td>
+                                        {% endfor %}
+
+                                        <td class="small">{{ item.hoc_phan.khoa_quan_ly.ten_khoa }}</td>
+                                        <td class="small text-muted">{{ item.loai_mon }}</td>
+                                        <td class="text-center">
+                                            <button class="btn btn-danger btn-sm" onclick="deleteCurriculum({{ version.id }}, {{ item.hoc_phan_id }})">
+                                                <i class="fa-solid fa-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    {% set ns.stt = ns.stt + 1 %}
+                                    {% set ns.tc_chuyen = ns.tc_chuyen + item.hoc_phan.so_tin_chi %}
+                                    {% endif %}
+                                {% endfor %}
+
+                                <tr class="total-row">
+                                    <td colspan="4" class="text-end">Cộng (II):</td>
+                                    <td class="text-center">{{ ns.tc_chuyen }}</td>
+                                    <td colspan="10"></td>
+                                </tr>
+
+                                <tr class="group-header"><td colspan="16">III. Khối kiến thức chuyên sâu (Tự chọn)</td></tr>
+
+                                {% for item in curriculum_list %}
+                                    {% if item.loai_mon == 'Tự chọn' %}
+                                    <tr>
+                                        <td class="text-center">{{ ns.stt }}</td>
+                                        <td class="text-center fw-bold text-primary">{{ item.hoc_phan.ma_hoc_phan }}</td>
+                                        <td><a href="/course/{{ item.hoc_phan.id }}" class="text-decoration-none text-dark">{{ item.hoc_phan.ten_hoc_phan }}</a></td>
+                                        <td class="text-center">{{ item.hoc_phan.so_tin_chi }}</td>
+
+                                        {% for semester in range(1, 9) %}
+                                            <td class="text-center">
+                                                {% if item.hoc_ky_du_kien == semester %}<i class="fa-solid fa-check text-success"></i>{% endif %}
+                                            </td>
+                                        {% endfor %}
+
+                                        <td class="small">{{ item.hoc_phan.khoa_quan_ly.ten_khoa }}</td>
+                                        <td class="small text-muted">
+                                            <span class="badge bg-warning text-dark">Tự chọn</span>
+                                        </td>
+                                        <td class="text-center">
+                                            <button class="btn btn-danger btn-sm" onclick="deleteCurriculum({{ version.id }}, {{ item.hoc_phan_id }})">
+                                                <i class="fa-solid fa-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    {% set ns.stt = ns.stt + 1 %}
+                                    {% set ns.tc_tuychon = ns.tc_tuychon + item.hoc_phan.so_tin_chi %}
+                                    {% endif %}
+                                {% endfor %}
+
+                                <tr class="total-row">
+                                    <td colspan="4" class="text-end">Cộng (III):</td>
+                                    <td class="text-center">{{ ns.tc_tuychon }}</td>
+                                    <td colspan="10"></td>
+                                </tr>
+
+                                <tr class="total-row text-danger fs-5">
+                                    <td colspan="4" class="text-end text-uppercase">Tổng cộng toàn khoá:</td>
+                                    <td class="text-center">{{ ns.tc_chung + ns.tc_chuyen + ns.tc_tuychon }}</td>
+                                    <td colspan="10"></td>
+                                </tr>
+                            {% else %}
+                                <tr>
+                                    <td colspan="16" class="text-center py-5 text-muted">
+                                        <i class="fa-solid fa-inbox" style="font-size: 2rem; opacity: 0.5; display: block; margin-bottom: 10px;"></i>
+                                        Chưa có học phần nào. Hãy nhấn "Thêm Học Phần" để bắt đầu.
+                                    </td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="divider"></div>
+
+            <!-- Action Buttons at Bottom -->
+            <div class="form-actions">
+                <a href="/admin/majors" class="btn-cancel">
+                    <i class="fa-solid fa-times"></i>Hủy
+                </a>
+                <button type="submit" class="btn-submit">
+                    <i class="fa-solid fa-save"></i>Cập nhật
+                </button>
+            </div>
+        </div>
+    </form>
+
+</div>
+
+<script>
+    // Initialize on document ready
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('Document ready - initializing...');
+
+        // Load faculties
+        fetch('/api/faculties?limit=1000').then(r => r.json()).then(data => {
+            const select = document.querySelector('select[name="khoa_id"]');
+            if (select) {
+                data.data.forEach(f => {
+                    const opt = document.createElement('option');
+                    opt.value = f.id;
+                    opt.textContent = f.ten + ' (' + f.ma + ')';
+                    select.appendChild(opt);
+                });
+                const selectedId = select.dataset.selectedId;
+                if (selectedId) select.value = selectedId;
+
+                // Initialize Select2 if available
+                if (typeof $ !== 'undefined' && $.fn.select2) {
+                    $(select).select2({
+                        placeholder: '-- Chọn Khoa/Viện --',
+                        allowClear: true,
+                        language: 'vi',
+                        width: '100%',
+                        minimumInputLength: 0
+                    });
+                }
+            }
+        });
+
+        // Load versions
+        console.log('Calling loadVersions()...');
+        setTimeout(function() {
+            loadVersions();
+        }, 500);
+    });
+
+    function loadVersions() {
+        // Extract major_id from current URL or use the data attribute
+        const majorId = '{{ major.id }}';
+        const url = `/api/admin/versions/major/${majorId}`;
+        console.log('Loading versions from:', url, 'majorId:', majorId);
+
+        fetch(url)
+            .then(r => {
+                console.log('Response status:', r.status);
+                if (!r.ok) {
+                    throw new Error(`HTTP error! status: ${r.status}`);
+                }
+                return r.json();
+            })
+            .then(data => {
+                console.log('Versions loaded:', data);
+
+                if (!data) {
+                    console.error('No data received');
+                    return;
+                }
+
+                if (data.status !== 'success' || !data.data) {
+                    console.warn('No versions available or error in response:', data);
+                    const select = document.getElementById('versionSelect');
+                    if (select) {
+                        select.innerHTML = '<option value="">-- Không có phiên bản --</option>';
+                    }
+                    return;
+                }
+
+                const select = document.getElementById('versionSelect');
+                if (!select) {
+                    console.error('versionSelect element not found');
+                    return;
+                }
+
+                select.innerHTML = '<option value="">-- Chọn Phiên Bản --</option>';
+
+                let k66Version = null;
+                let firstVersion = null;
+
+                if (data.data.length === 0) {
+                    console.warn('No versions found for this major');
+                    return;
+                }
+
+                data.data.forEach(v => {
+                    const opt = document.createElement('option');
+                    opt.value = v.id;
+                    opt.textContent = `${v.ma_phien_ban} (${v.nam_bat_dau})`;
+                    select.appendChild(opt);
+                    console.log('Added version option:', v.ma_phien_ban);
+
+                    // Find K66 version
+                    if (v.ma_phien_ban.toUpperCase().includes('K66')) {
+                        k66Version = v.id;
+                    }
+                    // Store first version
+                    if (!firstVersion) {
+                        firstVersion = v.id;
+                    }
+                });
+
+                // Select version based on priority:
+                // 1. Current version from query param (if exists)
+                // 2. K66 version (if exists)
+                // 3. First version (if exists)
+                let selectedValue = '';
+                {% if version %}
+                selectedValue = {{ version.id }};
+                {% endif %}
+
+                if (!selectedValue && k66Version) {
+                    selectedValue = k66Version;
+                    console.log('Auto-selected K66 version:', selectedValue);
+                } else if (!selectedValue && firstVersion) {
+                    selectedValue = firstVersion;
+                    console.log('Auto-selected first version:', selectedValue);
+                }
+
+                if (selectedValue) {
+                    try {
+                        select.value = selectedValue;
+                        console.log('Selected version:', selectedValue);
+                        // Auto-switch to selected version if not from query param
+                        {% if not version %}
+                        if (k66Version) {
+                            setTimeout(function() {
+                                switchVersion();
+                            }, 100);
+                        }
+                        {% endif %}
+                    } catch(e) {
+                        console.error('Error setting select value:', e);
+                    }
+                }
+            })
+            .catch(err => {
+                console.error('Error loading versions:', err);
+                alert('Lỗi khi tải danh sách phiên bản: ' + err);
+            });
+    }
+
+    function switchVersion() {
+        const versionId = document.getElementById('versionSelect').value;
+        console.log('Switching to version:', versionId);
+        if (versionId) {
+            window.location.href = `?version_id=${versionId}`;
+        }
+    }
+
+    function openCreateVersionModal() {
+        const html = `
+            <div class="modal fade" id="createVersionModal" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Tạo Phiên Bản Chương Trình Mới</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="form-group mb-3">
+                                <label>Mã Phiên Bản</label>
+                                <input type="text" id="maPhienBan" class="form-control" placeholder="VD: K65, K64" required />
+                                <small class="text-muted">Ký hiệu phiên bản (VD: K65, K66)</small>
+                            </div>
+                            <div class="form-group">
+                                <label>Năm Bắt Đầu</label>
+                                <input type="number" id="namBatDau" class="form-control" placeholder="VD: 2024" required />
+                                <small class="text-muted">Năm áp dụng chương trình</small>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                            <button type="button" class="btn btn-primary" onclick="createNewVersion()">Tạo</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        const oldModal = document.getElementById('createVersionModal');
+        if (oldModal) oldModal.remove();
+
+        document.body.insertAdjacentHTML('beforeend', html);
+        new bootstrap.Modal(document.getElementById('createVersionModal')).show();
+    }
+
+    function createNewVersion() {
+        const maPhienBan = document.getElementById('maPhienBan').value.trim();
+        const namBatDau = document.getElementById('namBatDau').value;
+
+        if (!maPhienBan || !namBatDau) {
+            alert('Vui lòng điền đầy đủ thông tin');
+            return;
+        }
+
+        fetch('/api/admin/versions', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                nganh_id: {{ major.id }},
+                ma_phien_ban: maPhienBan,
+                nam_bat_dau: parseInt(namBatDau)
+            })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.status === 'success') {
+                bootstrap.Modal.getInstance(document.getElementById('createVersionModal')).hide();
+                alert('Tạo phiên bản thành công!');
+                // Switch to new version
+                const newVersionId = data.data.id;
+                window.location.href = `?version_id=${newVersionId}`;
+            } else {
+                alert('Lỗi: ' + (data.error || 'Không xác định'));
+            }
+        })
+        .catch(err => {
+            console.error('Error:', err);
+            alert('Lỗi kết nối: ' + err);
+        });
+    }
+
+    function deleteCurrentVersion() {
+        const versionSelect = document.getElementById('versionSelect');
+        const versionId = versionSelect.value;
+
+        if (!versionId) {
+            alert('Vui lòng chọn phiên bản để xóa');
+            return;
+        }
+
+        const selectedOption = versionSelect.options[versionSelect.selectedIndex];
+        const versionName = selectedOption.textContent;
+
+        if (!confirm(`Bạn có chắc chắn muốn xóa phiên bản "${versionName}"?\n\nHành động này sẽ xóa toàn bộ học phần trong phiên bản này và không thể hoàn tác.`)) {
+            return;
+        }
+
+        fetch(`/api/admin/versions/${versionId}`, {
+            method: 'DELETE',
+            headers: {'Content-Type': 'application/json'}
+        })
+        .then(r => {
+            if (!r.ok) {
+                throw new Error(`HTTP error! status: ${r.status}`);
+            }
+            return r.json();
+        })
+        .then(data => {
+            if (data.status === 'success') {
+                alert('Xóa phiên bản thành công!');
+                // Reload to refresh the list
+                window.location.href = `/admin/majors/{{ major.id }}`;
+            } else {
+                alert('Lỗi: ' + (data.error || data.message || 'Không xác định'));
+            }
+        })
+        .catch(err => {
+            console.error('Error deleting version:', err);
+            alert('Lỗi khi xóa phiên bản: ' + err.message);
+        });
+    }
+
+    // Search functionality
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+        searchInput.addEventListener('keyup', function() {
+            let filter = this.value.toUpperCase();
+            let curriculumTable = document.getElementById("curriculumTable");
+            if (!curriculumTable) return;
+
+            let rows = curriculumTable.getElementsByTagName("tr") || [];
+
+            for (let i = 2; i < rows.length; i++) {
+                if(rows[i].classList.contains('group-header') || rows[i].classList.contains('total-row')) continue;
+
+                let tdMa = rows[i].getElementsByTagName("td")[1];
+                let tdTen = rows[i].getElementsByTagName("td")[2];
+
+                if (tdMa || tdTen) {
+                    let textMa = tdMa.textContent || tdMa.innerText;
+                    let textTen = tdTen.textContent || tdTen.innerText;
+                    if (textMa.toUpperCase().indexOf(filter) > -1 || textTen.toUpperCase().indexOf(filter) > -1) {
+                        rows[i].style.display = "";
+                    } else {
+                        rows[i].style.display = "none";
+                    }
+                }
+            }
+        });
+    }
+
+    // Add curriculum functionality
+    function openAddCourseModal() {
+        const versionId = {{ version.id if version else 'null' }};
+        if (!versionId) {
+            alert('Chưa có phiên bản chương trình');
+            return;
+        }
+
+        console.log('Opening add course modal for version:', versionId, 'major:', {{ major.id }});
+
+        // Fetch available courses
+        fetch(`/api/admin/courses/available?major_id={{ major.id }}&version_id=${versionId}`)
+            .then(r => {
+                console.log('Fetch response status:', r.status);
+                if (!r.ok) {
+                    throw new Error(`HTTP error! status: ${r.status}`);
+                }
+                return r.json();
+            })
+            .then(data => {
+                console.log('Available courses data:', data);
+
+                if (!data || !data.data) {
+                    alert('Lỗi: Không thể tải danh sách học phần');
+                    return;
+                }
+
+                if (data.data.length === 0) {
+                    alert('Tất cả học phần đã được thêm');
+                    return;
+                }
+
+                // Create modal
+                const html = `
+                    <div class="modal fade" id="addCourseModal" tabindex="-1">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">Thêm Học Phần</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="form-group">
+                                        <label>Chọn Học Phần</label>
+                                        <select id="courseSelect" class="form-control">
+                                            <option value="">-- Chọn --</option>
+                                            ${data.data.map(c => `<option value="${c.id}" data-credits="${c.tin_chi}">${c.ma} - ${c.ten}</option>`).join('')}
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Học kỳ</label>
+                                        <select id="semesterSelect" class="form-control">
+                                            ${[1,2,3,4,5,6,7,8].map(i => `<option value="${i}">Học kỳ ${i}</option>`).join('')}
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Loại môn</label>
+                                        <select id="typeSelect" class="form-control">
+                                            <option value="Bắt buộc">Bắt buộc</option>
+                                            <option value="Chuyên ngành">Chuyên ngành</option>
+                                            <option value="Tự chọn">Tự chọn</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                                    <button type="button" class="btn btn-primary" onclick="addCourseToCurriculum(${versionId})">Thêm</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                // Remove old modal if exists
+                const oldModal = document.getElementById('addCourseModal');
+                if (oldModal) oldModal.remove();
+
+                document.body.insertAdjacentHTML('beforeend', html);
+                new bootstrap.Modal(document.getElementById('addCourseModal')).show();
+                console.log('Modal shown successfully');
+            })
+            .catch(err => {
+                console.error('Error loading available courses:', err);
+                alert('Lỗi khi tải danh sách học phần: ' + err.message);
+            });
+    }
+
+    function addCourseToCurriculum(versionId) {
+        const courseId = document.getElementById('courseSelect').value;
+        const semester = document.getElementById('semesterSelect').value;
+        const loaiMon = document.getElementById('typeSelect').value;
+
+        if (!courseId) {
+            alert('Vui lòng chọn học phần');
+            return;
+        }
+
+        fetch('/api/admin/curriculum', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                phien_ban_id: versionId,
+                hoc_phan_id: parseInt(courseId),
+                hoc_ky: parseInt(semester),
+                loai_mon: loaiMon
+            })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.status === 'success') {
+                bootstrap.Modal.getInstance(document.getElementById('addCourseModal')).hide();
+                location.reload();
+            } else {
+                alert('Lỗi: ' + (data.error || 'Không xác định'));
+            }
+        })
+        .catch(err => {
+            console.error('Fetch error:', err);
+            alert('Lỗi kết nối: ' + err);
+        });
+    }
+
+    function deleteCurriculum(phienBanId, hocPhanId) {
+        if (!confirm('Xóa học phần này?')) return;
+
+        fetch(`/api/admin/curriculum/${phienBanId}/${hocPhanId}`, {
+            method: 'DELETE'
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.status === 'success') {
+                location.reload();
+            } else {
+                alert('Lỗi: ' + data.error);
+            }
+        });
+    }
+</script>
+{% endblock %}
+
+

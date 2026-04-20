@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}Thêm Khoa/Viện - Admin{% endblock %}
+{% block content %}
+<div class="admin-form-header">
+	<div class="container">
+		<a href="{{ url_for('course.admin_faculties') }}">
+			<i class="fa-solid fa-chevron-left"></i>Quay lại danh sách
+		</a>
+		<h1>
+			<i class="fa-solid fa-sitemap"></i>Thêm Khoa/Viện Mới
+		</h1>
+	</div>
+</div>
+
+<div class="admin-form-container">
+	{% if error %}
+	<div class="admin-error-alert">
+		<i class="fa-solid fa-circle-exclamation"></i>{{ error }}
+	</div>
+	{% endif %}
+
+	<form method="POST">
+		<div class="admin-form-group">
+			<label>
+				<i class="fa-solid fa-building"></i>
+				<span>Chọn Trường</span>
+			</label>
+			<select name="truong_id" required>
+				<option value="">-- Chọn Trường --</option>
+			</select>
+			<small>Lựa chọn trường mà khoa/viện này thuộc về</small>
+		</div>
+
+		<div class="admin-form-group">
+			<label>
+				<i class="fa-solid fa-code"></i>
+				<span>Mã Khoa/Viện</span>
+			</label>
+			<input type="text" name="ma_khoa" placeholder="VD: CNTT, QTKD" required />
+			<small>Ký hiệu ngắn gọn để nhận diện khoa/viện</small>
+		</div>
+
+		<div class="admin-form-group">
+			<label>
+				<i class="fa-solid fa-heading"></i>
+				<span>Tên Khoa/Viện</span>
+			</label>
+			<input type="text" name="ten_khoa" placeholder="VD: Viện Công nghệ thông tin" required />
+			<small>Tên đầy đủ của khoa/viện</small>
+		</div>
+
+		<div class="admin-form-actions">
+			<button type="submit" class="btn-submit">
+				<i class="fa-solid fa-save"></i>Thêm Mới
+			</button>
+			<a href="{{ url_for('course.admin_faculties') }}" class="btn-cancel">
+				<i class="fa-solid fa-times"></i>Hủy
+			</a>
+		</div>
+	</form>
+</div>
+
+<script>
+fetch('/api/schools?limit=1000').then(r => r.json()).then(data => {
+	const select = document.querySelector('select[name="truong_id"]');
+	data.data.forEach(s => {
+		const opt = document.createElement('option');
+		opt.value = s.id;
+		opt.textContent = s.ten + ' (' + s.ma + ')';
+		select.appendChild(opt);
+	});
+});
+</script>
+{% endblock %}
+

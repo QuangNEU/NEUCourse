@@ -1,226 +1,447 @@
 {% extends "base.html" %}
 
-{% block title %}{{ school.ten_truong }} - Chi tiết{% endblock %}
+{% block title %}Chi tiết Trường{% endblock %}
 
 {% block extra_css %}
 <style>
-    .detail-header {
-        background: linear-gradient(135deg, var(--neu-blue) 0%, #0652A3 100%);
-        color: white;
-        padding: 30px 0;
-        margin-bottom: 30px;
-    }
+	.detail-header {
+		background: linear-gradient(135deg, var(--neu-blue) 0%, #0d3d6f 100%);
+		color: white;
+		padding: 30px 0;
+		margin-bottom: 30px;
+	}
 
-    .detail-header h1 {
-        font-size: 2.5rem;
-        font-weight: 700;
-        margin-bottom: 10px;
-    }
+	.detail-header a {
+		color: rgba(255,255,255,0.9);
+		text-decoration: none;
+		font-size: 1rem;
+		transition: all 0.3s ease;
+		display: inline-flex;
+		align-items: center;
+		gap: 8px;
+		padding: 8px 12px;
+		border-radius: 8px;
+		margin-bottom: 10px;
+	}
 
-    .detail-info {
-        background: rgba(255,255,255,0.1);
-        padding: 15px 20px;
-        border-radius: 8px;
-        margin-top: 15px;
-        font-size: 0.95rem;
-    }
+	.detail-header a:hover {
+		color: white;
+		background-color: rgba(255,255,255,0.15);
+		transform: translateX(-3px);
+	}
 
-    .section-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 20px;
-        padding-bottom: 15px;
-        border-bottom: 2px solid var(--neu-blue);
-    }
+	.detail-header h1 {
+		font-size: 2.5rem;
+		font-weight: 700;
+		margin-bottom: 10px;
+	}
 
-    .section-header h2 {
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: var(--text-main);
-    }
+	.detail-header p {
+		opacity: 0.9;
+		margin: 5px 0;
+	}
 
-    .btn-add-faculty {
-        background-color: var(--neu-orange);
-        color: white;
-        padding: 10px 20px;
-        border: none;
-        border-radius: 8px;
-        font-weight: 600;
-        text-decoration: none;
-        cursor: pointer;
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-    }
+	.section-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		margin-bottom: 25px;
+		flex-wrap: wrap;
+		gap: 15px;
+	}
 
-    .btn-add-faculty:hover {
-        background-color: #e68a2e;
-    }
+	.section-header h2 {
+		font-size: 1.5rem;
+		font-weight: 700;
+		color: var(--text-main);
+		margin: 0;
+	}
 
-    .faculty-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-        gap: 20px;
-    }
+	.view-controls {
+		display: flex;
+		gap: 8px;
+		align-items: center;
+	}
 
-    .faculty-card {
-        background: white;
-        border-radius: 12px;
-        padding: 20px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-        transition: all 0.3s;
-        border-left: 5px solid var(--neu-blue);
-    }
+	.view-toggle {
+		display: flex;
+		gap: 0;
+		border: 2px solid #ddd;
+		border-radius: 8px;
+		overflow: hidden;
+		background: white;
+	}
 
-    .faculty-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
-    }
+	.view-btn {
+		padding: 8px 16px;
+		border: none;
+		background: white;
+		color: var(--text-main);
+		cursor: pointer;
+		font-weight: 600;
+		font-size: 0.9rem;
+        height: 45px;
+		transition: all 0.3s;
+	}
 
-    .faculty-name {
-        font-size: 1.1rem;
-        font-weight: 700;
-        color: var(--text-main);
-        margin-bottom: 8px;
-    }
+	.view-btn:hover {
+		background: #f5f5f5;
+	}
 
-    .faculty-code {
-        font-size: 0.85rem;
-        color: var(--text-muted);
-        margin-bottom: 12px;
-    }
+	.view-btn.active {
+		background: var(--neu-blue);
+		color: white;
+	}
 
-    .faculty-majors {
-        font-size: 0.9rem;
-        color: var(--text-muted);
-        margin-bottom: 15px;
-    }
+	.btn-add-faculty {
+		background-color: var(--neu-orange);
+		color: white;
+		padding: 10px 20px;
+		border: none;
+		border-radius: 8px;
+		font-weight: 600;
+		text-decoration: none;
+		display: inline-flex;
+		align-items: center;
+		gap: 8px;
+		cursor: pointer;
+		transition: all 0.3s ease;
+	}
 
-    .faculty-majors strong {
-        color: var(--neu-blue);
-    }
+	.btn-add-faculty:hover {
+		background-color: #e68a2e;
+		transform: translateY(-2px);
+		box-shadow: 0 4px 12px rgba(255, 159, 67, 0.3);
+	}
 
-    .faculty-actions {
-        display: flex;
-        gap: 8px;
-        margin-top: 12px;
-    }
+	/* Card View Styles */
+	.faculty-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+		gap: 20px;
+	}
 
-    .btn-edit-faculty, .btn-delete-faculty {
+	.faculty-card {
+		background: white;
+		border-radius: 12px;
+		padding: 20px;
+		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+		transition: all 0.3s;
+		border-left: 5px solid var(--neu-blue);
+		display: flex;
+		flex-direction: column;
+		hover: {
+			transform: translateY(-5px);
+			box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+		}
+	}
+
+	.faculty-card:hover {
+		transform: translateY(-5px);
+		box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+	}
+
+	.faculty-name {
+		font-size: 1.1rem;
+		font-weight: 700;
+		color: var(--text-main);
+		margin-bottom: 8px;
+	}
+
+	.faculty-code {
+		font-size: 0.85rem;
+		color: var(--text-muted);
+		margin-bottom: 12px;
+	}
+
+	.faculty-count {
+		font-size: 0.9rem;
+		color: var(--text-muted);
+		margin-bottom: 12px;
+	}
+
+	.faculty-actions {
+		display: flex;
+		gap: 8px;
+		margin-top: auto;
+	}
+
+
+     .btn-edit,
+     .btn-delete {
         flex: 1;
-        padding: 8px 12px;
+         padding: 10px 16px;
         border: none;
         border-radius: 6px;
         font-size: 0.85rem;
         font-weight: 600;
         cursor: pointer;
-        transition: all 0.2s;
-        text-align: center;
+        text-align: center;height: 30px;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+         text-decoration: none;
+        gap: 6px;
     }
 
-    .btn-edit-faculty {
+    .btn-edit {
         background-color: var(--neu-blue);
         color: white;
     }
 
-    .btn-edit-faculty:hover {
+     .btn-edit:hover {
         background-color: #0652A3;
+        transform: translateY(-2px);
     }
 
-    .btn-delete-faculty {
+     .btn-delete {
         background-color: #DC3545;
         color: white;
     }
 
-    .btn-delete-faculty:hover {
+    .btn-delete:hover {
         background-color: #c82333;
+        transform: translateY(-2px);
     }
+	/* Table View Styles */
+	.table-view {
+		display: none;
+	}
 
-    .empty-message {
-        text-align: center;
-        padding: 40px 20px;
-        color: var(--text-muted);
-    }
+	.table-view.active {
+		display: block;
+	}
 
-    .back-link {
-        color: rgba(255,255,255,0.7);
-        text-decoration: none;
-        font-size: 0.95rem;
-    }
+	.card-view.hidden {
+		display: none;
+	}
 
-    .back-link:hover {
-        color: white;
-    }
+	.table-container {
+		background: white;
+		border-radius: 12px;
+		box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+		overflow: hidden;
+	}
+
+	.table-container .admin-table {
+		width: 100%;
+		border-collapse: collapse;
+	}
+
+	.table-container .admin-table thead {
+		background-color: var(--neu-blue);
+		color: white;
+	}
+
+	.table-container .admin-table th {
+		padding: 15px;
+		font-weight: 600;
+		text-align: center;
+		font-size: 0.9rem;
+		letter-spacing: 0.3px;
+	}
+
+	.table-container .admin-table td {
+		padding: 15px;
+		border-bottom: 1px solid #EEE;
+		text-align: center;
+	}
+
+	.table-container .admin-table tbody tr:hover {
+		background-color: var(--bg-light);
+		transition: background-color 0.2s;
+	}
+
+	.table-container .badge {
+		background-color: var(--neu-blue);
+		color: white;
+		padding: 6px 12px;
+		border-radius: 6px;
+		font-weight: 600;
+		font-size: 0.85rem;
+		display: inline-block;
+	}
+
+	.empty-state {
+		background: white;
+		border-radius: 12px;
+		box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+		text-align: center;
+		padding: 60px 20px;
+		color: var(--text-muted);
+	}
+
+	.empty-state-icon {
+		font-size: 3rem;
+		margin-bottom: 15px;
+		opacity: 0.5;
+		color: var(--neu-blue);
+	}
+
+	.empty-state h3 {
+		font-size: 1.3rem;
+		margin-bottom: 10px;
+		color: var(--text-main);
+		font-weight: 600;
+	}
+
+	.empty-state p {
+		margin: 0;
+		font-size: 0.95rem;
+	}
+
+	@media (max-width: 768px) {
+		.section-header {
+			flex-direction: column;
+			align-items: flex-start;
+		}
+
+		.detail-header h1 {
+			font-size: 1.8rem;
+		}
+
+		.faculty-grid {
+			grid-template-columns: 1fr;
+		}
+
+		.view-controls {
+			width: 100%;
+		}
+
+		.btn-add-faculty {
+			flex: 1;
+		}
+	}
 </style>
 {% endblock %}
 
 {% block content %}
-<!-- Header -->
 <div class="detail-header">
-    <div class="container">
-        <a href="{{ url_for('course.admin_schools') }}" class="back-link">
-            <i class="fa-solid fa-chevron-left me-2"></i>Quay lại danh sách
-        </a>
-        <h1><i class="fa-solid fa-building me-3"></i>{{ school.ten_truong }}</h1>
-        <div class="detail-info">
-            <strong>Mã trường:</strong> {{ school.ma_truong }} |
-            <strong>Số Khoa/Viện:</strong> {{ school.khoas|length }}
-        </div>
-    </div>
+	<div class="container">
+		<a href="{{ url_for('course.admin_schools') }}">
+			<i class="fa-solid fa-chevron-left me-2"></i>Quay lại Quản lý Trường
+		</a>
+		<h1><i class="fa-solid fa-building me-3"></i>{{ school.ten_truong }}</h1>
+		<p><strong>Mã:</strong> {{ school.ma_truong }} | <strong>Số Khoa/Viện:</strong> {{ school.khoas|length }}</p>
+	</div>
 </div>
 
 <div class="container" style="padding: 30px 0;">
-    <!-- Section: Khoa/Viện -->
-    <div class="section-header">
-        <h2><i class="fa-solid fa-sitemap me-2"></i>Khoa/Viện</h2>
-        <a href="{{ url_for('course.admin_faculty_create_in_school', school_id=school.id) }}" class="btn-add-faculty">
-            <i class="fa-solid fa-plus"></i> Thêm Khoa/Viện
-        </a>
-    </div>
+	<div class="section-header">
+		<h2><i class="fa-solid fa-sitemap me-2"></i>Khoa/Viện</h2>
+		<div class="view-controls">
+			<div class="view-toggle">
+				<button class="view-btn active" onclick="switchView('card')">
+					<i class="fa-solid fa-th"></i> Card
+				</button>
+				<button class="view-btn" onclick="switchView('table')">
+					<i class="fa-solid fa-table"></i> Bảng
+				</button>
+			</div>
+			<a href="{{ url_for('course.admin_faculty_create_in_school', school_id=school.id) }}" class="btn-add-faculty">
+				<i class="fa-solid fa-plus"></i> Thêm
+			</a>
+		</div>
+	</div>
 
-    {% if school.khoas %}
-        <div class="faculty-grid" id="facultyGrid">
-            {% for faculty in school.khoas %}
-            <div class="faculty-card">
-                <div class="faculty-code">{{ faculty.ma_khoa }}</div>
-                <div class="faculty-name">{{ faculty.ten_khoa }}</div>
-                <div class="faculty-majors">
-                    <strong>{{ faculty.nganhs|length }}</strong> Ngành
-                </div>
-                <div class="faculty-actions">
-                    <a href="{{ url_for('course.admin_faculty_edit', faculty_id=faculty.id) }}" class="btn-edit-faculty">
-                        <i class="fa-solid fa-edit"></i> Sửa
-                    </a>
-                    <button onclick="deleteFaculty({{ faculty.id }}, {{ school.id }})" class="btn-delete-faculty">
-                        <i class="fa-solid fa-trash"></i> Xóa
-                    </button>
-                </div>
-            </div>
-            {% endfor %}
-        </div>
-    {% else %}
-        <div class="empty-message">
-            <div style="font-size: 2rem; margin-bottom: 10px;">
-                <i class="fa-solid fa-inbox"></i>
-            </div>
-            <h3>Chưa có Khoa/Viện</h3>
-            <p>Hãy thêm Khoa/Viện mới để bắt đầu</p>
-        </div>
-    {% endif %}
+	{% if school.khoas %}
+		<!-- Card View -->
+		<div class="card-view active" id="cardView">
+			<div class="faculty-grid">
+				{% for faculty in school.khoas %}
+				<div class="faculty-card">
+					<div class="faculty-code">{{ faculty.ma_khoa }}</div>
+					<div class="faculty-name">{{ faculty.ten_khoa }}</div>
+					<div class="faculty-count">
+						<strong>{{ faculty.nganhs|length }}</strong> Ngành
+					</div>
+					<div class="faculty-actions">
+						<a href="{{ url_for('course.admin_faculty_edit', faculty_id=faculty.id) }}" class="btn-edit">
+							<i class="fa-solid fa-edit"></i> Sửa
+						</a>
+						<button onclick="if(confirm('Xóa?')) fetch('/api/admin/faculties/{{ faculty.id }}', {method:'DELETE'}).then(()=>location.reload())" class="btn-delete">
+							<i class="fa-solid fa-trash"></i> Xóa
+						</button>
+					</div>
+				</div>
+				{% endfor %}
+			</div>
+		</div>
+
+		<!-- Table View -->
+		<div class="table-view" id="tableView">
+			<div class="table-container">
+				<table class="admin-table">
+					<thead>
+						<tr>
+							<th>Mã Khoa</th>
+							<th>Tên Khoa/Viện</th>
+							<th>Số Ngành</th>
+							<th>Hành động</th>
+						</tr>
+					</thead>
+					<tbody>
+						{% for faculty in school.khoas %}
+						<tr>
+							<td><strong>{{ faculty.ma_khoa }}</strong></td>
+							<td>{{ faculty.ten_khoa }}</td>
+							<td><span class="badge">{{ faculty.nganhs|length }}</span></td>
+							<td>
+								<div class="table-actions">
+									<a href="{{ url_for('course.admin_faculty_edit', faculty_id=faculty.id) }}" class="btn-edit">Sửa</a>
+									<button onclick="if(confirm('Xóa?')) fetch('/api/admin/faculties/{{ faculty.id }}', {method:'DELETE'}).then(()=>location.reload())" class="btn-delete">Xóa</button>
+								</div>
+							</td>
+						</tr>
+						{% endfor %}
+					</tbody>
+				</table>
+			</div>
+		</div>
+
+	{% else %}
+		<div class="empty-state">
+			<div class="empty-state-icon">
+				<i class="fa-solid fa-inbox"></i>
+			</div>
+			<h3>Chưa có Khoa/Viện</h3>
+			<p>Hãy thêm Khoa/Viện mới để bắt đầu</p>
+		</div>
+	{% endif %}
 </div>
 
 <script>
-    function deleteFaculty(facultyId, schoolId) {
-        if (confirm('Bạn chắc chắn muốn xóa Khoa/Viện này?')) {
-            fetch(`/api/admin/faculties/${facultyId}`, {method: 'DELETE'})
-                .then(r => r.json())
-                .then(data => {
-                    location.reload();
-                })
-                .catch(e => alert('Lỗi: ' + e.message));
-        }
-    }
+function switchView(viewType) {
+	const cardView = document.getElementById('cardView');
+	const tableView = document.getElementById('tableView');
+	const buttons = document.querySelectorAll('.view-btn');
+
+	// Remove active class from all buttons
+	buttons.forEach(btn => btn.classList.remove('active'));
+
+	if (viewType === 'card') {
+		cardView.classList.add('active');
+		cardView.classList.remove('hidden');
+		tableView.classList.remove('active');
+		tableView.classList.add('hidden');
+		buttons[0].classList.add('active');
+		localStorage.setItem('facultyView', 'card');
+	} else if (viewType === 'table') {
+		cardView.classList.remove('active');
+		cardView.classList.add('hidden');
+		tableView.classList.add('active');
+		tableView.classList.remove('hidden');
+		buttons[1].classList.add('active');
+		localStorage.setItem('facultyView', 'table');
+	}
+}
+
+// Load saved view preference
+window.addEventListener('load', function() {
+	const savedView = localStorage.getItem('facultyView') || 'card';
+	switchView(savedView);
+});
 </script>
 {% endblock %}
 

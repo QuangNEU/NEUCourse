@@ -1,63 +1,73 @@
 {% extends "base.html" %}
-
 {% block title %}Thêm Người dùng - Admin{% endblock %}
-
-{% block extra_css %}
-<style>
-    .form-container {
-        max-width: 600px;
-        margin: 50px auto;
-        background: white;
-        padding: 40px;
-        border-radius: 12px;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-    }
-
-    .form-group {
-        margin-bottom: 20px;
-    }
-
-    .form-group label {
-        display: block;
-        margin-bottom: 8px;
-        font-weight: 600;
-    }
-
-    .form-group input,
-    .form-group select {
-        width: 100%;
-        padding: 10px;
-        border: 1px solid #DDD;
-        border-radius: 8px;
-    }
-</style>
-{% endblock %}
-
 {% block content %}
-<div class="form-container">
-    <h1><i class="fa-solid fa-user-plus me-2"></i>Thêm Người dùng</h1>
-    <form method="POST">
-        <div class="form-group">
-            <label>Username</label>
-            <input type="text" name="username" required />
-        </div>
-        <div class="form-group">
-            <label>Mật khẩu</label>
-            <input type="password" name="password" required />
-        </div>
-        <div class="form-group">
-            <label>Họ tên</label>
-            <input type="text" name="ho_ten" required />
-        </div>
-        <div class="form-group">
-            <label>Vai trò</label>
-            <select name="vai_tro">
-                <option value="User">Người dùng</option>
-                <option value="Admin">Quản trị viên</option>
-            </select>
-        </div>
-        <button type="submit" class="btn btn-primary">Thêm</button>
-    </form>
+<div class="admin-form-header">
+	<div class="container">
+		<a href="{{ url_for('course.admin_users') }}">
+			<i class="fa-solid fa-chevron-left"></i>Quay lại danh sách
+		</a>
+		<h1>
+			<i class="fa-solid fa-user-plus"></i>Thêm Người dùng Mới
+		</h1>
+	</div>
+</div>
+
+<div class="admin-form-container">
+	{% if error %}
+	<div class="admin-error-alert">
+		<i class="fa-solid fa-circle-exclamation"></i>{{ error }}
+	</div>
+	{% endif %}
+
+	<form method="POST">
+		<div class="admin-form-group">
+			<label>
+				<i class="fa-solid fa-user"></i>
+				<span>Username</span>
+			</label>
+			<input type="text" name="username" placeholder="VD: user123" required />
+			<small>Tên đăng nhập duy nhất của người dùng</small>
+		</div>
+
+		<div class="admin-form-group">
+			<label>
+				<i class="fa-solid fa-lock"></i>
+				<span>Mật khẩu</span>
+			</label>
+			<input type="password" name="password" placeholder="Nhập mật khẩu" required />
+			<small>Mật khẩu phải đủ mạnh</small>
+		</div>
+
+		<div class="admin-form-group">
+			<label>
+				<i class="fa-solid fa-id-card"></i>
+				<span>Họ tên</span>
+			</label>
+			<input type="text" name="ho_ten" placeholder="VD: Nguyễn Văn A" required />
+			<small>Họ và tên đầy đủ của người dùng</small>
+		</div>
+
+		<div class="admin-form-group">
+			<label>
+				<i class="fa-solid fa-shield"></i>
+				<span>Vai trò</span>
+			</label>
+			<select name="vai_tro" required>
+				<option value="User">Người dùng</option>
+				<option value="Admin">Quản trị viên</option>
+			</select>
+			<small>Chọn vai trò người dùng trong hệ thống</small>
+		</div>
+
+		<div class="admin-form-actions">
+			<button type="submit" class="btn-submit">
+				<i class="fa-solid fa-save"></i>Thêm Mới
+			</button>
+			<a href="{{ url_for('course.admin_users') }}" class="btn-cancel">
+				<i class="fa-solid fa-times"></i>Hủy
+			</a>
+		</div>
+	</form>
 </div>
 {% endblock %}
 

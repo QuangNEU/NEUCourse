@@ -128,6 +128,7 @@
                     <th colspan="8">Phân bổ theo học kỳ</th>
                     <th rowspan="2" style="width: 150px;">Khoa/Viện quản lý</th>
                     <th rowspan="2" style="width: 100px;">Ghi chú</th>
+                    <th rowspan="2" style="width: 50px;">Hành động</th>
                 </tr>
                 <tr>
                     <th class="semester-col">1</th><th class="semester-col">2</th><th class="semester-col">3</th><th class="semester-col">4</th>
@@ -135,76 +136,129 @@
                 </tr>
             </thead>
             <tbody>
-                <tr class="group-header"><td colspan="15">I. Khối kiến thức chung (Bắt buộc)</td></tr>
-                
-                {% set ns = namespace(stt=1, tc_chung=0) %}
-                {% for item in curriculum_list %}
-                    {% if item.hoc_phan.khoa_quan_ly.ma_khoa == 'K_CHUNG' %}
-                    <tr>
-                        <td class="text-center">{{ ns.stt }}</td>
-                        <td class="text-center fw-bold text-primary">{{ item.hoc_phan.ma_hoc_phan }}</td>
-                        <td><a href="/course/{{ item.hoc_phan.id }}" class="text-decoration-none text-dark">{{ item.hoc_phan.ten_hoc_phan }}</a></td>
-                        <td class="text-center">{{ item.hoc_phan.so_tin_chi }}</td>
-                        
-                        {% for semester in range(1, 9) %}
-                            <td class="text-center">
-                                {% if item.hoc_ky_du_kien == semester %}<i class="fa-solid fa-check text-success"></i>{% endif %}
-                            </td>
-                        {% endfor %}
-                        
-                        <td class="small">{{ item.hoc_phan.khoa_quan_ly.ten_khoa }}</td>
-                        <td class="small text-muted">{{ item.loai_mon }}</td>
-                    </tr>
-                    {% set ns.stt = ns.stt + 1 %}
-                    {% set ns.tc_chung = ns.tc_chung + item.hoc_phan.so_tin_chi %}
-                    {% endif %}
-                {% endfor %}
-                
-                <tr class="total-row">
-                    <td colspan="3" class="text-end">Cộng (I):</td>
-                    <td class="text-center">{{ ns.tc_chung }}</td>
-                    <td colspan="10"></td>
-                </tr>
+                {% if curriculum_list %}
+                    {% set ns = namespace(stt=1, tc_chung=0, tc_chuyen=0, tc_tuychon=0) %}
 
-                <tr class="group-header"><td colspan="15">II. Khối kiến thức chuyên ngành (Cơ sở & Chuyên sâu)</td></tr>
-                
-                {% set ns_chuyen = namespace(tc_chuyen=0) %}
-                {% for item in curriculum_list %}
-                    {% if item.hoc_phan.khoa_quan_ly.ma_khoa != 'K_CHUNG' %}
-                    <tr>
-                        <td class="text-center">{{ ns.stt }}</td>
-                        <td class="text-center fw-bold text-primary">{{ item.hoc_phan.ma_hoc_phan }}</td>
-                        <td><a href="/course/{{ item.hoc_phan.id }}" class="text-decoration-none text-dark">{{ item.hoc_phan.ten_hoc_phan }}</a></td>
-                        <td class="text-center">{{ item.hoc_phan.so_tin_chi }}</td>
-                        
-                        {% for semester in range(1, 9) %}
+                    <tr class="group-header"><td colspan="16">I. Khối kiến thức chung (Bắt buộc)</td></tr>
+
+                    {% for item in curriculum_list %}
+                        {% if item.hoc_phan.khoa_quan_ly.ma_khoa == 'K_CHUNG' %}
+                        <tr>
+                            <td class="text-center">{{ ns.stt }}</td>
+                            <td class="text-center fw-bold text-primary">{{ item.hoc_phan.ma_hoc_phan }}</td>
+                            <td><a href="/course/{{ item.hoc_phan.id }}" class="text-decoration-none text-dark">{{ item.hoc_phan.ten_hoc_phan }}</a></td>
+                            <td class="text-center">{{ item.hoc_phan.so_tin_chi }}</td>
+
+                            {% for semester in range(1, 9) %}
+                                <td class="text-center">
+                                    {% if item.hoc_ky_du_kien == semester %}<i class="fa-solid fa-check text-success"></i>{% endif %}
+                                </td>
+                            {% endfor %}
+
+                            <td class="small">{{ item.hoc_phan.khoa_quan_ly.ten_khoa }}</td>
+                            <td class="small text-muted">{{ item.loai_mon }}</td>
                             <td class="text-center">
-                                {% if item.hoc_ky_du_kien == semester %}<i class="fa-solid fa-check text-success"></i>{% endif %}
+                                <button class="btn btn-danger btn-sm" onclick="deleteCurriculum({{ version.id }}, {{ item.hoc_phan_id }})">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
                             </td>
-                        {% endfor %}
-                        
-                        <td class="small">{{ item.hoc_phan.khoa_quan_ly.ten_khoa }}</td>
-                        <td class="small text-muted">
-                            {% if item.loai_mon == 'Tự chọn' %}<span class="badge bg-warning text-dark">Tự chọn</span>
-                            {% else %}{{ item.loai_mon }}{% endif %}
+                        </tr>
+                        {% set ns.stt = ns.stt + 1 %}
+                        {% set ns.tc_chung = ns.tc_chung + item.hoc_phan.so_tin_chi %}
+                        {% endif %}
+                    {% endfor %}
+
+                    <tr class="total-row">
+                        <td colspan="4" class="text-end">Cộng (I):</td>
+                        <td class="text-center">{{ ns.tc_chung }}</td>
+                        <td colspan="10"></td>
+                    </tr>
+
+                    <tr class="group-header"><td colspan="16">II. Khối kiến thức chuyên ngành (Bắt buộc)</td></tr>
+
+                    {% for item in curriculum_list %}
+                        {% if item.hoc_phan.khoa_quan_ly.ma_khoa != 'K_CHUNG' and item.loai_mon != 'Tự chọn' %}
+                        <tr>
+                            <td class="text-center">{{ ns.stt }}</td>
+                            <td class="text-center fw-bold text-primary">{{ item.hoc_phan.ma_hoc_phan }}</td>
+                            <td><a href="/course/{{ item.hoc_phan.id }}" class="text-decoration-none text-dark">{{ item.hoc_phan.ten_hoc_phan }}</a></td>
+                            <td class="text-center">{{ item.hoc_phan.so_tin_chi }}</td>
+
+                            {% for semester in range(1, 9) %}
+                                <td class="text-center">
+                                    {% if item.hoc_ky_du_kien == semester %}<i class="fa-solid fa-check text-success"></i>{% endif %}
+                                </td>
+                            {% endfor %}
+
+                            <td class="small">{{ item.hoc_phan.khoa_quan_ly.ten_khoa }}</td>
+                            <td class="small text-muted">{{ item.loai_mon }}</td>
+                            <td class="text-center">
+                                <button class="btn btn-danger btn-sm" onclick="deleteCurriculum({{ version.id }}, {{ item.hoc_phan_id }})">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% set ns.stt = ns.stt + 1 %}
+                        {% set ns.tc_chuyen = ns.tc_chuyen + item.hoc_phan.so_tin_chi %}
+                        {% endif %}
+                    {% endfor %}
+
+                    <tr class="total-row">
+                        <td colspan="4" class="text-end">Cộng (II):</td>
+                        <td class="text-center">{{ ns.tc_chuyen }}</td>
+                        <td colspan="10"></td>
+                    </tr>
+
+                    <tr class="group-header"><td colspan="16">III. Khối kiến thức chuyên sâu (Tự chọn)</td></tr>
+
+                    {% for item in curriculum_list %}
+                        {% if item.loai_mon == 'Tự chọn' %}
+                        <tr>
+                            <td class="text-center">{{ ns.stt }}</td>
+                            <td class="text-center fw-bold text-primary">{{ item.hoc_phan.ma_hoc_phan }}</td>
+                            <td><a href="/course/{{ item.hoc_phan.id }}" class="text-decoration-none text-dark">{{ item.hoc_phan.ten_hoc_phan }}</a></td>
+                            <td class="text-center">{{ item.hoc_phan.so_tin_chi }}</td>
+
+                            {% for semester in range(1, 9) %}
+                                <td class="text-center">
+                                    {% if item.hoc_ky_du_kien == semester %}<i class="fa-solid fa-check text-success"></i>{% endif %}
+                                </td>
+                            {% endfor %}
+
+                            <td class="small">{{ item.hoc_phan.khoa_quan_ly.ten_khoa }}</td>
+                            <td class="small text-muted">
+                                <span class="badge bg-warning text-dark">Tự chọn</span>
+                            </td>
+                            <td class="text-center">
+                                <button class="btn btn-danger btn-sm" onclick="deleteCurriculum({{ version.id }}, {{ item.hoc_phan_id }})">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% set ns.stt = ns.stt + 1 %}
+                        {% set ns.tc_tuychon = ns.tc_tuychon + item.hoc_phan.so_tin_chi %}
+                        {% endif %}
+                    {% endfor %}
+
+                    <tr class="total-row">
+                        <td colspan="4" class="text-end">Cộng (III):</td>
+                        <td class="text-center">{{ ns.tc_tuychon }}</td>
+                        <td colspan="10"></td>
+                    </tr>
+
+                    <tr class="total-row text-danger fs-5">
+                        <td colspan="4" class="text-end text-uppercase">Tổng cộng toàn khoá:</td>
+                        <td class="text-center">{{ ns.tc_chung + ns.tc_chuyen + ns.tc_tuychon }}</td>
+                        <td colspan="10"></td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="16" class="text-center py-5 text-muted">
+                            <i class="fa-solid fa-inbox" style="font-size: 2rem; opacity: 0.5; display: block; margin-bottom: 10px;"></i>
+                            Chưa có học phần nào. Hãy nhấn "Thêm Học Phần" để bắt đầu.
                         </td>
                     </tr>
-                    {% set ns.stt = ns.stt + 1 %}
-                    {% set ns_chuyen.tc_chuyen = ns_chuyen.tc_chuyen + item.hoc_phan.so_tin_chi %}
-                    {% endif %}
-                {% endfor %}
-
-                <tr class="total-row">
-                    <td colspan="3" class="text-end">Cộng (II):</td>
-                    <td class="text-center">{{ ns_chuyen.tc_chuyen }}</td>
-                    <td colspan="10"></td>
-                </tr>
-                
-                <tr class="total-row text-danger fs-5">
-                    <td colspan="3" class="text-end text-uppercase">Tổng cộng toàn khoá:</td>
-                    <td class="text-center">{{ total_credits }}</td>
-                    <td colspan="10"></td>
-                </tr>
+                {% endif %}
             </tbody>
         </table>
     </div>

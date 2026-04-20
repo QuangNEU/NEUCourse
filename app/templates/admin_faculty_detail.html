@@ -1,0 +1,548 @@
+{% extends "base.html" %}
+
+{% block title %}Chi tiết Khoa/Viện - Admin{% endblock %}
+
+{% block extra_css %}
+<style>
+	.detail-header {
+		background: linear-gradient(135deg, var(--neu-blue) 0%, #0d3d6f 100%);
+		color: white;
+		padding: 30px 0 35px;
+		margin-bottom: 30px;
+	}
+
+	.detail-header a {
+		color: rgba(255,255,255,0.9);
+		text-decoration: none;
+		font-size: 1rem;
+		transition: all 0.3s ease;
+		display: inline-flex;
+		align-items: center;
+		gap: 8px;
+		padding: 8px 12px;
+		border-radius: 8px;
+		margin-bottom: 10px;
+	}
+
+	.detail-header a:hover {
+		color: white;
+		background-color: rgba(255,255,255,0.15);
+		transform: translateX(-3px);
+	}
+
+	.detail-header h1 {
+		font-size: 2.2rem;
+		font-weight: 700;
+		margin-bottom: 10px;
+	}
+
+	.detail-header p {
+		opacity: 0.9;
+		margin: 5px 0;
+	}
+
+	.summary-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+		gap: 16px;
+		margin-bottom: 28px;
+	}
+
+	.summary-card {
+		background: white;
+		border-radius: 12px;
+		padding: 18px 20px;
+		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+		border-left: 5px solid var(--neu-blue);
+	}
+
+	.summary-card .label {
+		font-size: 0.85rem;
+		color: var(--text-muted);
+		margin-bottom: 6px;
+		font-weight: 500;
+	}
+
+	.summary-card .value {
+		font-size: 1.05rem;
+		font-weight: 700;
+		color: var(--text-main);
+	}
+
+	.section-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		margin-bottom: 20px;
+		gap: 15px;
+		flex-wrap: wrap;
+	}
+
+	.section-header h2 {
+		font-size: 1.4rem;
+		font-weight: 700;
+		color: var(--text-main);
+		margin: 0;
+	}
+
+	.btn-add-major {
+		background-color: var(--neu-orange);
+		color: white;
+		padding: 10px 18px;
+		border: none;
+		border-radius: 8px;
+		font-weight: 600;
+		text-decoration: none;
+		display: inline-flex;
+		align-items: center;
+		gap: 8px;
+		transition: all 0.3s ease;
+	}
+
+	.btn-add-major:hover {
+		background-color: #e68a2e;
+		transform: translateY(-2px);
+		box-shadow: 0 4px 12px rgba(255, 159, 67, 0.3);
+	}
+
+	.major-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+		gap: 20px;
+	}
+
+	.major-card {
+		background: #fff;
+		border-radius: 12px;
+		padding: 20px;
+		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+		transition: all 0.3s ease;
+		border-left: 5px solid var(--neu-blue);
+		display: flex;
+		flex-direction: column;
+	}
+
+	.major-card:hover {
+		transform: translateY(-5px);
+		box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+	}
+
+	.major-code {
+		font-size: 0.85rem;
+		color: var(--text-muted);
+		margin-bottom: 8px;
+		font-weight: 500;
+	}
+
+	.major-name {
+		font-size: 1.1rem;
+		font-weight: 700;
+		color: var(--text-main);
+		margin-bottom: 12px;
+	}
+
+	.major-info {
+		font-size: 0.9rem;
+		color: var(--text-muted);
+		margin-bottom: 16px;
+		flex-grow: 1;
+	}
+
+	.major-actions {
+		display: flex;
+		gap: 8px;
+		margin-top: auto;
+	}
+
+	.major-actions .btn-edit,
+	.major-actions .btn-delete {
+		flex: 1;
+		padding: 8px 12px;
+		border: none;
+		border-radius: 6px;
+		font-size: 0.85rem;
+		font-weight: 600;
+		cursor: pointer;
+		text-align: center;
+		transition: all 0.3s ease;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		gap: 6px;
+		text-decoration: none;
+	}
+
+	.major-actions .btn-edit {
+		background-color: var(--neu-blue);
+		color: white;
+	}
+
+	.major-actions .btn-delete {
+		background-color: #DC3545;
+		color: white;
+	}
+
+	.major-actions .btn-edit:hover {
+		background-color: #0652A3;
+		transform: translateY(-2px);
+	}
+
+	.major-actions .btn-delete:hover {
+		background-color: #c82333;
+		transform: translateY(-2px);
+	}
+
+	.empty-state {
+		text-align: center;
+		padding: 60px 20px;
+		color: var(--text-muted);
+		background: white;
+		border-radius: 12px;
+		box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+	}
+
+	.empty-state-icon {
+		font-size: 3rem;
+		margin-bottom: 15px;
+		opacity: 0.5;
+		color: var(--neu-blue);
+	}
+
+	.empty-state h3 {
+		font-size: 1.3rem;
+		margin-bottom: 10px;
+		color: var(--text-main);
+		font-weight: 600;
+	}
+
+	.empty-state p {
+		margin: 0;
+		font-size: 0.95rem;
+	}
+
+	.view-toggle {
+		display: flex;
+		gap: 0;
+		border: 2px solid #ddd;
+		border-radius: 8px;
+		overflow: hidden;
+		background: white;
+	}
+
+	.view-btn {
+		padding: 8px 16px;
+		border: none;
+		background: white;
+		color: var(--text-main);
+		cursor: pointer;
+		font-weight: 600;
+		font-size: 0.9rem;
+		transition: all 0.3s;
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+		height: 45px;
+	}
+
+	.view-btn:hover {
+		background: #f5f5f5;
+	}
+
+	.view-btn.active {
+		background: var(--neu-blue);
+		color: white;
+	}
+
+	/* Table View Styles */
+	.major-table-wrapper {
+		display: none;
+	}
+
+	.major-table-wrapper.active {
+		display: block;
+	}
+
+	.major-grid.hidden {
+		display: none;
+	}
+
+	.table-container {
+		background: white;
+		border-radius: 12px;
+		box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+		overflow: hidden;
+	}
+
+	.major-table {
+		width: 100%;
+		border-collapse: collapse;
+	}
+
+	.major-table thead {
+		background-color: var(--neu-blue);
+		color: white;
+	}
+
+	.major-table th {
+		padding: 15px;
+		font-weight: 600;
+		text-align: center;
+		font-size: 0.9rem;
+		letter-spacing: 0.3px;
+	}
+
+	.major-table td {
+		padding: 15px;
+		border-bottom: 1px solid #EEE;
+		text-align: center;
+	}
+
+	.major-table tbody tr {
+		transition: background-color 0.3s ease;
+	}
+
+	.major-table tbody tr:hover {
+		background-color: var(--bg-light);
+	}
+
+	.major-table tbody tr:last-child td {
+		border-bottom: none;
+	}
+
+	.major-table .code-cell {
+		font-weight: 600;
+		color: var(--neu-blue);
+	}
+
+	.major-table .name-cell {
+		font-weight: 600;
+		color: var(--text-main);
+	}
+
+	.major-table .info-cell {
+		color: var(--text-muted);
+	}
+
+	.table-actions {
+		display: flex;
+		gap: 8px;
+		justify-content: center;
+	}
+
+	.major-table .btn-edit,
+	.major-table .btn-delete {
+		padding: 10px 16px;
+		border: none;
+		border-radius: 8px;
+		font-size: 0.85rem;
+		font-weight: 600;
+		cursor: pointer;
+		transition: all 0.2s;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		gap: 5px;
+		text-decoration: none;
+		height: 30px;
+	}
+
+	.major-table .btn-edit {
+		background-color: var(--neu-blue);
+		color: white;
+	}
+
+	.major-table .btn-delete {
+		background-color: #DC3545;
+		color: white;
+	}
+
+	.major-table .btn-edit:hover {
+		background-color: #0652A3;
+		transform: translateY(-2px);
+	}
+
+	.major-table .btn-delete:hover {
+		background-color: #c82333;
+		transform: translateY(-2px);
+	}
+
+	@media (max-width: 768px) {
+		.detail-header h1 {
+			font-size: 1.7rem;
+		}
+
+		.section-header {
+			flex-direction: column;
+			align-items: flex-start;
+		}
+
+		.major-grid {
+			grid-template-columns: 1fr;
+		}
+
+		.major-actions {
+			flex-direction: column;
+		}
+
+		.view-toggle {
+			width: 100%;
+			justify-content: flex-start;
+		}
+
+		.major-table {
+			font-size: 0.85rem;
+		}
+
+		.major-table th,
+		.major-table td {
+			padding: 10px 12px;
+		}
+
+		.major-table .actions-cell {
+			flex-direction: column;
+		}
+
+		.major-table .btn-edit,
+		.major-table .btn-delete {
+			width: 100%;
+			min-width: auto;
+		}
+	}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="detail-header">
+	<div class="container">
+		<a href="/admin/faculties">
+			<i class="fa-solid fa-chevron-left me-2"></i>Quay lại danh sách Khoa/Viện
+		</a>
+		<h1><i class="fa-solid fa-sitemap me-3"></i>{{ faculty.ten_khoa }}</h1>
+		<p><strong>Mã:</strong> {{ faculty.ma_khoa }} | <strong>Trường:</strong> {{ school.ten_truong }} | <strong>Số Ngành:</strong> {{ majors|length }}</p>
+	</div>
+</div>
+
+<div class="container" style="padding: 0 0 30px;">
+	<div class="section-header">
+		<h2><i class="fa-solid fa-layer-group me-2"></i>Danh sách Ngành</h2>
+		<div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+			<div class="view-toggle">
+				<button class="view-btn active" onclick="switchView('grid')">
+					<i class="fa-solid fa-th"></i> Card
+				</button>
+				<button class="view-btn" onclick="switchView('table')">
+					<i class="fa-solid fa-table"></i> Bảng
+				</button>
+			</div>
+			<a href="/admin/faculties/{{ faculty.id }}/majors/create" class="btn-add-major">
+				<i class="fa-solid fa-plus"></i> Thêm Ngành
+			</a>
+		</div>
+	</div>
+
+	{% if majors %}
+		<!-- Card View -->
+		<div class="major-grid" id="gridView">
+			{% for major in majors %}
+			<div class="major-card">
+				<div class="major-code">{{ major.ma_nganh }}</div>
+				<div class="major-name">{{ major.ten_nganh }}</div>
+				<div class="major-info">
+					{% if major.phien_ban_cts %}
+						<strong>{{ major.phien_ban_cts|length }}</strong> phiên bản chương trình
+					{% else %}
+						Chưa có phiên bản chương trình
+					{% endif %}
+				</div>
+				<div class="major-actions">
+					<a href="/admin/majors/{{ major.id }}/edit" class="btn-edit">
+						<i class="fa-solid fa-edit"></i>Sửa
+					</a>
+					<button onclick="if(confirm('Xóa ngành này?')) fetch('/api/admin/majors/{{ major.id }}', {method:'DELETE'}).then(() => location.reload())" class="btn-delete">
+						<i class="fa-solid fa-trash"></i>Xóa
+					</button>
+				</div>
+			</div>
+			{% endfor %}
+		</div>
+
+		<!-- Table View -->
+		<div class="major-table-wrapper" id="tableView">
+			<div class="table-container">
+				<table class="major-table">
+					<thead>
+						<tr>
+							<th>Mã Ngành</th>
+							<th>Tên Ngành</th>
+							<th>Phiên bản chương trình</th>
+							<th>Hành Động</th>
+						</tr>
+					</thead>
+					<tbody>
+						{% for major in majors %}
+						<tr>
+							<td class="code-cell">{{ major.ma_nganh }}</td>
+							<td class="name-cell">{{ major.ten_nganh }}</td>
+							<td class="info-cell">
+								{% if major.phien_ban_cts %}
+									<strong>{{ major.phien_ban_cts|length }}</strong>
+								{% else %}
+									<span style="color: #999;">Chưa có</span>
+								{% endif %}
+							</td>
+							<td class="actions-cell">
+								<a href="/admin/majors/{{ major.id }}/edit" class="btn-edit">
+									<i class="fa-solid fa-edit"></i> Sửa
+								</a>
+								<button onclick="if(confirm('Xóa ngành này?')) fetch('/api/admin/majors/{{ major.id }}', {method:'DELETE'}).then(() => location.reload())" class="btn-delete">
+									<i class="fa-solid fa-trash"></i> Xóa
+								</button>
+							</td>
+						</tr>
+						{% endfor %}
+					</tbody>
+				</table>
+			</div>
+		</div>
+	{% else %}
+		<div class="empty-state">
+			<div class="empty-state-icon">
+				<i class="fa-solid fa-inbox"></i>
+			</div>
+			<h3>Chưa có Ngành</h3>
+			<p>Hãy thêm ngành học cho khoa/viện này để bắt đầu quản lý.</p>
+		</div>
+	{% endif %}
+</div>
+
+<script>
+	function switchView(view) {
+		const gridView = document.getElementById('gridView');
+		const tableView = document.getElementById('tableView');
+		const toggleBtns = document.querySelectorAll('.view-btn');
+
+		// Update button states
+		toggleBtns.forEach(btn => btn.classList.remove('active'));
+
+		if (view === 'grid') {
+			gridView.classList.remove('hidden');
+			tableView.classList.remove('active');
+			toggleBtns[0].classList.add('active');
+			localStorage.setItem('majorViewPreference', 'grid');
+		} else if (view === 'table') {
+			gridView.classList.add('hidden');
+			tableView.classList.add('active');
+			toggleBtns[1].classList.add('active');
+			localStorage.setItem('majorViewPreference', 'table');
+		}
+	}
+
+	// Load user's preferred view on page load
+	document.addEventListener('DOMContentLoaded', function() {
+		const preference = localStorage.getItem('majorViewPreference') || 'grid';
+		switchView(preference);
+	});
+</script>
+{% endblock %}
+
+

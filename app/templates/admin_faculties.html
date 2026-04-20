@@ -4,155 +4,516 @@
 
 {% block extra_css %}
 <style>
-    .admin-page-header {
-        background: linear-gradient(135deg, var(--neu-blue) 0%, #0652A3 100%);
-        color: white;
-        padding: 30px 0;
-        margin-bottom: 30px;
-    }
+	.admin-page-header {
+		background: linear-gradient(135deg, var(--neu-blue) 0%, #0d3d6f 100%);
+		color: white;
+		padding: 30px 0;
+		margin-bottom: 30px;
+	}
 
-    .admin-page-header h1 {
-        font-size: 2rem;
-        font-weight: 700;
-        margin-bottom: 5px;
-    }
+	.admin-page-header h1 {
+		font-size: 2rem;
+		font-weight: 700;
+	}
 
-    .admin-toolbar {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 25px;
-        gap: 15px;
-    }
+	.admin-page-header a {
+		color: rgba(255,255,255,0.9);
+		text-decoration: none;
+		font-size: 1rem;
+		transition: all 0.3s ease;
+		display: inline-flex;
+		align-items: center;
+		gap: 8px;
+		padding: 8px 12px;
+		border-radius: 8px;
+		margin-bottom: 10px;
+	}
 
-    .btn-add {
-        background-color: var(--neu-orange);
-        color: white;
-        padding: 10px 20px;
+	.admin-page-header a:hover {
+		color: white;
+		background-color: rgba(255,255,255,0.15);
+		transform: translateX(-3px);
+	}
+
+	.admin-toolbar {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		margin-bottom: 25px;
+		gap: 15px;
+		flex-wrap: wrap;
+	}
+
+	.admin-search {
+		flex: 1;
+		min-width: 200px;
+	}
+
+	.admin-search input {
+		width: 100%;
+		padding: 10px 15px;
+		border: 1px solid #DDD;
+		border-radius: 8px;
+		font-family: 'Inter', sans-serif;
+	}
+
+	.view-controls {
+		display: flex;
+		gap: 8px;
+		align-items: center;
+	}
+
+	.view-toggle {
+		display: flex;
+		gap: 0;
+		border: 2px solid #ddd;
+		border-radius: 8px;
+		overflow: hidden;
+		background: white;
+	}
+
+	.view-btn {
+		padding: 8px 16px;
+		border: none;
+		background: white;
+		color: var(--text-main);
+		cursor: pointer;
+		font-weight: 600;
+		font-size: 0.9rem;
+		transition: all 0.3s;
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+        height: 45px;
+	}
+
+	.view-btn:hover {
+		background: #f5f5f5;
+	}
+
+	.view-btn.active {
+		background: var(--neu-blue);
+		color: white;
+	}
+
+	.btn-add {
+		background-color: var(--neu-orange);
+		color: white;
+		padding: 10px 20px;
+		border: none;
+		border-radius: 8px;
+		font-weight: 600;
+		text-decoration: none;
+		display: inline-flex;
+		align-items: center;
+		gap: 8px;
+		transition: all 0.3s ease;
+		cursor: pointer;
+	}
+
+	.btn-add:hover {
+		background-color: #e68a2e;
+		transform: translateY(-2px);
+		box-shadow: 0 4px 12px rgba(255, 159, 67, 0.3);
+	}
+
+	.faculty-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+		gap: 20px;
+	}
+
+	.faculty-card {
+		background: white;
+		border-radius: 12px;
+		padding: 24px;
+		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+		transition: all 0.3s;
+		border-left: 5px solid var(--neu-blue);
+		display: flex;
+		flex-direction: column;
+	}
+
+	.faculty-card:hover {
+		transform: translateY(-5px);
+		box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+	}
+
+	.faculty-code {
+		font-size: 0.85rem;
+		color: var(--text-muted);
+		margin-bottom: 8px;
+		font-weight: 500;
+	}
+
+	.faculty-name {
+		font-size: 1.15rem;
+		font-weight: 700;
+		color: var(--text-main);
+		margin-bottom: 12px;
+	}
+
+	.faculty-info {
+		font-size: 0.9rem;
+		color: var(--text-muted);
+		margin-bottom: 16px;
+		flex-grow: 1;
+	}
+
+	.faculty-info strong {
+		color: var(--text-main);
+	}
+
+	.faculty-actions {
+		display: flex;
+		gap: 8px;
+		margin-top: auto;
+	}
+
+	.faculty-actions .btn-view,
+	.btn-view,
+	.btn-edit,
+	.btn-delete {
+		 padding: 10px 16px;
         border: none;
         border-radius: 8px;
+        font-size: 0.85rem;
         font-weight: 600;
         cursor: pointer;
+        height: 30px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
         text-decoration: none;
-    }
-
-    .btn-add:hover {
-        background-color: #e68a2e;
-    }
-
-    .table-container {
-        background: white;
-        border-radius: 12px;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-        overflow: hidden;
-    }
-
-    .admin-table {
-        width: 100%;
-        border-collapse: collapse;
-    }
-
-    .admin-table thead {
-        background-color: var(--neu-blue);
-        color: white;
-    }
-
-    .admin-table th {
-        padding: 15px;
-        font-weight: 600;
-        text-align: left;
-    }
-
-    .admin-table td {
-        padding: 15px;
-        border-bottom: 1px solid #EEE;
-    }
-
-    .admin-table tbody tr:hover {
-        background-color: var(--bg-light);
-    }
-
-    .table-actions {
-        display: flex;
-        gap: 8px;
-    }
-
-    .btn-edit, .btn-delete {
-        padding: 6px 12px;
+        transition: all 0.2s;
+        gap: 5px;
+	}
+    	.faculty-actions .btn-edit,
+	.faculty-actions .btn-delete {
+               flex: 1;
+        padding: 8px 12px;
         border: none;
         border-radius: 6px;
         font-size: 0.85rem;
         font-weight: 600;
         cursor: pointer;
-    }
+        text-align: center;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        }
 
-    .btn-edit {
-        background-color: var(--neu-blue);
-        color: white;
-    }
+	.btn-view {
+		background-color: #6c757d;
+		color: white;
+	}
 
-    .btn-delete {
-        background-color: #DC3545;
-        color: white;
-    }
+	.btn-view:hover {
+		background-color: #5a6268;
+		transform: translateY(-2px);
+	}
+
+	.btn-edit {
+		background-color: var(--neu-blue);
+		color: white;
+	}
+
+	.btn-edit:hover {
+		background-color: #0652A3;
+		transform: translateY(-2px);
+	}
+
+	.btn-delete {
+		background-color: #DC3545;
+		color: white;
+	}
+
+	.btn-delete:hover {
+		background-color: #c82333;
+		transform: translateY(-2px);
+	}
+
+	.table-view {
+		display: none;
+	}
+
+	.table-view.active {
+		display: block;
+	}
+
+	.card-view.hidden {
+		display: none;
+	}
+
+	.table-container {
+		background: white;
+		border-radius: 12px;
+		box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+		overflow: hidden;
+	}
+
+	.admin-table {
+		width: 100%;
+		border-collapse: collapse;
+	}
+
+	.admin-table thead {
+		background-color: var(--neu-blue);
+		color: white;
+	}
+
+	.admin-table th {
+		padding: 15px;
+		font-weight: 600;
+		text-align: center;
+		font-size: 0.9rem;
+		letter-spacing: 0.3px;
+	}
+
+	.admin-table td {
+		padding: 15px;
+		border-bottom: 1px solid #EEE;
+		text-align: center;
+	}
+
+	.admin-table tbody tr:hover {
+		background-color: var(--bg-light);
+	}
+
+	.table-actions {
+		display: flex;
+		gap: 8px;
+		justify-content: center;
+	}
+
+	.badge {
+		background-color: var(--neu-blue);
+		color: white;
+		padding: 6px 12px;
+		border-radius: 6px;
+		font-weight: 600;
+		display: inline-block;
+	}
+
+	.empty-state {
+		background: white;
+		border-radius: 12px;
+		box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+		text-align: center;
+		padding: 60px 20px;
+		color: var(--text-muted);
+	}
+
+	.empty-state-icon {
+		font-size: 3rem;
+		margin-bottom: 15px;
+		opacity: 0.5;
+		color: var(--neu-blue);
+	}
+
+	.empty-state h3 {
+		font-size: 1.3rem;
+		margin-bottom: 10px;
+		color: var(--text-main);
+		font-weight: 600;
+	}
+
+	.empty-state p {
+		margin: 0;
+		font-size: 0.95rem;
+	}
+
+	@media (max-width: 768px) {
+		.admin-toolbar {
+			flex-direction: column;
+			align-items: stretch;
+		}
+
+		.view-controls {
+			width: 100%;
+			justify-content: space-between;
+		}
+
+		.btn-add {
+			flex: 1;
+		}
+
+		.faculty-grid {
+			grid-template-columns: 1fr;
+		}
+
+		.faculty-actions {
+			flex-direction: column;
+		}
+
+		.faculty-actions .btn-view,
+		.faculty-actions .btn-edit,
+		.faculty-actions .btn-delete {
+			width: 100%;
+		}
+	}
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="admin-page-header">
-    <div class="container">
-        <a href="{{ url_for('course.admin') }}" style="color: rgba(255,255,255,0.7); text-decoration: none;">
-            <i class="fa-solid fa-chevron-left me-2"></i>Quay lại
-        </a>
-        <h1><i class="fa-solid fa-sitemap me-3"></i>Quản lý Khoa/Viện</h1>
-    </div>
+	<div class="container">
+		<a href="/admin">← Quay lại trang Dashboard</a>
+		<h1><i class="fa-solid fa-sitemap me-3"></i>Quản lý Khoa/Viện</h1>
+	</div>
 </div>
 
 <div class="container" style="padding: 30px 0;">
-    <div class="admin-toolbar">
-        <input type="text" placeholder="Tìm kiếm..." style="padding: 10px; border: 1px solid #DDD; border-radius: 8px;" />
-        <a href="{{ url_for('course.admin_faculty_create') }}" class="btn-add">
-            <i class="fa-solid fa-plus"></i> Thêm
-        </a>
-    </div>
+	<div class="admin-toolbar">
+		<div class="admin-search">
+			<input type="text" id="searchInput" placeholder="Tìm kiếm..." aria-label="Tìm kiếm Khoa/Viện" />
+		</div>
+		<div class="view-controls">
+			<div class="view-toggle">
+				<button class="view-btn active" type="button" onclick="switchView('card')">
+					<i class="fa-solid fa-th"></i> Card
+				</button>
+				<button class="view-btn" type="button" onclick="switchView('table')">
+					<i class="fa-solid fa-table"></i> Bảng
+				</button>
+			</div>
+			<a href="/admin/faculty/create" class="btn-add">
+				<i class="fa-solid fa-plus"></i> Thêm
+			</a>
+		</div>
+	</div>
 
-    <div class="table-container">
-        <table class="admin-table">
-            <thead>
-                <tr>
-                    <th>Mã</th>
-                    <th>Tên Khoa/Viện</th>
-                    <th>Trường</th>
-                    <th>Ngành</th>
-                    <th>Hành động</th>
-                </tr>
-            </thead>
-            <tbody id="faculties">
-            </tbody>
-        </table>
-    </div>
+	<div class="card-view active" id="cardView">
+		<div id="cardContainer" class="faculty-grid"></div>
+	</div>
+
+	<div class="table-view" id="tableView">
+		<div class="table-container">
+			<table class="admin-table">
+				<thead>
+					<tr>
+						<th>Mã</th>
+						<th>Tên Khoa</th>
+						<th>Trường</th>
+						<th>Số Ngành</th>
+						<th>Hành động</th>
+					</tr>
+				</thead>
+				<tbody id="tbody">
+					<tr><td colspan="5" style="text-align: center; padding: 20px;">Đang tải...</td></tr>
+				</tbody>
+			</table>
+		</div>
+	</div>
 </div>
 
 <script>
-    function loadFaculties() {
-        fetch('/api/admin/faculties')
-            .then(response => response.json())
-            .then(data => {
-                document.getElementById('faculties').innerHTML = data.data.map(f => `
-                    <tr>
-                        <td>${f.ma}</td>
-                        <td>${f.ten}</td>
-                        <td>${f.truong}</td>
-                        <td><span class="badge bg-primary">${f.count_nganh}</span></td>
-                        <td>
-                            <button class="btn-edit">Sửa</button>
-                            <button class="btn-delete">Xóa</button>
-                        </td>
-                    </tr>
-                `).join('');
-            });
-    }
-    loadFaculties();
+function renderCardView(data) {
+	const container = document.getElementById('cardContainer');
+	if (data.length === 0) {
+		container.innerHTML = `
+			<div class="empty-state" style="grid-column: 1 / -1;">
+				<div class="empty-state-icon"><i class="fa-solid fa-inbox"></i></div>
+				<h3>Không có dữ liệu</h3>
+				<p>Hãy thêm Khoa/Viện mới để bắt đầu</p>
+			</div>
+		`;
+		return;
+	}
+
+	container.innerHTML = data.map(f => `
+		<div class="faculty-card">
+			<div class="faculty-code">${f.ma}</div>
+			<div class="faculty-name"><a href="/admin/faculties/${f.id}" style="color: var(--neu-blue); text-decoration: none;">${f.ten}</a></div>
+			<div class="faculty-info">
+				<div><strong>${f.truong}</strong></div>
+				<div style="margin-top: 6px;"><strong>${f.count_nganh}</strong> Ngành</div>
+			</div>
+			<div class="faculty-actions">
+
+				<a href="/admin/faculties/${f.id}/edit" class="btn-edit"><i class="fa-solid fa-edit"></i>Sửa</a>
+				<button type="button" onclick="if(confirm('Xóa?')) fetch('/api/admin/faculties/${f.id}', {method:'DELETE'}).then(() => load())" class="btn-delete"><i class="fa-solid fa-trash"></i>Xóa</button>
+			</div>
+		</div>
+	`).join('');
+}
+
+function renderTableView(data) {
+	const tbody = document.getElementById('tbody');
+	if (data.length === 0) {
+		tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 20px;">Không có dữ liệu</td></tr>';
+		return;
+	}
+
+	tbody.innerHTML = data.map(f => `
+		<tr>
+			<td><strong>${f.ma}</strong></td>
+			<td><a href="/admin/faculties/${f.id}" style="color: var(--neu-blue); text-decoration: none; font-weight: 500;">${f.ten}</a></td>
+			<td>${f.truong}</td>
+			<td><span class="badge">${f.count_nganh}</span></td>
+			<td>
+				<div class="table-actions">
+
+					<a href="/admin/faculties/${f.id}/edit" class="btn-edit"><i class="fa-solid fa-edit"></i>Sửa</a>
+					<button type="button" onclick="if(confirm('Xóa?')) fetch('/api/admin/faculties/${f.id}', {method:'DELETE'}).then(() => load())" class="btn-delete"><i class="fa-solid fa-trash"></i>Xóa</button>
+				</div>
+			</td>
+		</tr>
+	`).join('');
+}
+
+function load() {
+	fetch('/api/faculties')
+		.then(r => r.json())
+		.then(data => {
+			renderCardView(data.data);
+			renderTableView(data.data);
+		})
+		.catch(e => {
+			document.getElementById('cardContainer').innerHTML = '<div class="empty-state" style="grid-column: 1 / -1; color: red;">Lỗi: ' + e.message + '</div>';
+			document.getElementById('tbody').innerHTML = '<tr><td colspan="5" style="text-align: center; color: red;">Lỗi: ' + e.message + '</td></tr>';
+		});
+}
+
+function switchView(viewType) {
+	const cardView = document.getElementById('cardView');
+	const tableView = document.getElementById('tableView');
+	const buttons = document.querySelectorAll('.view-btn');
+	buttons.forEach(btn => btn.classList.remove('active'));
+
+	if (viewType === 'card') {
+		cardView.classList.add('active');
+		cardView.classList.remove('hidden');
+		tableView.classList.remove('active');
+		tableView.classList.add('hidden');
+		buttons[0].classList.add('active');
+		localStorage.setItem('facultyView', 'card');
+	} else {
+		cardView.classList.remove('active');
+		cardView.classList.add('hidden');
+		tableView.classList.add('active');
+		tableView.classList.remove('hidden');
+		buttons[1].classList.add('active');
+		localStorage.setItem('facultyView', 'table');
+	}
+}
+
+load();
+
+document.getElementById('searchInput').addEventListener('input', function(e) {
+	const q = e.target.value;
+	fetch(`/api/faculties?q=${encodeURIComponent(q)}`)
+		.then(r => r.json())
+		.then(data => {
+			renderCardView(data.data);
+			renderTableView(data.data);
+		});
+});
+
+window.addEventListener('load', function() {
+	switchView(localStorage.getItem('facultyView') || 'card');
+});
 </script>
 {% endblock %}
-
