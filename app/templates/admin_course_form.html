@@ -1,25 +1,84 @@
 {% extends "base.html" %}
-
 {% block title %}Thêm Học phần - Admin{% endblock %}
-
 {% block content %}
-<div class="form-container" style="max-width: 600px; margin: 50px auto; background: white; padding: 40px; border-radius: 12px;">
-    <h1>Thêm Học phần</h1>
-    <form method="POST">
-        <div class="form-group" style="margin-bottom: 20px;">
-            <label>Mã Học phần</label>
-            <input type="text" name="ma_hoc_phan" required style="width: 100%; padding: 10px; border: 1px solid #DDD; border-radius: 8px;" />
-        </div>
-        <div class="form-group" style="margin-bottom: 20px;">
-            <label>Tên Học phần</label>
-            <input type="text" name="ten_hoc_phan" required style="width: 100%; padding: 10px; border: 1px solid #DDD; border-radius: 8px;" />
-        </div>
-        <div class="form-group" style="margin-bottom: 20px;">
-            <label>Số tín chỉ</label>
-            <input type="number" name="so_tin_chi" required style="width: 100%; padding: 10px; border: 1px solid #DDD; border-radius: 8px;" />
-        </div>
-        <button type="submit" class="btn btn-primary">Thêm</button>
-    </form>
+<div class="admin-form-header">
+	<div class="container">
+		<a href="{{ url_for('course.admin_courses') }}">
+			<i class="fa-solid fa-chevron-left"></i>Quay lại danh sách
+		</a>
+		<h1>
+			<i class="fa-solid fa-book"></i>Thêm Học phần Mới
+		</h1>
+	</div>
 </div>
+
+<div class="admin-form-container">
+	{% if error %}
+	<div class="admin-error-alert">
+		<i class="fa-solid fa-circle-exclamation"></i>{{ error }}
+	</div>
+	{% endif %}
+
+	<form method="POST">
+		<div class="admin-form-group">
+			<label>
+				<i class="fa-solid fa-code"></i>
+				<span>Mã Học phần</span>
+			</label>
+			<input type="text" name="ma_hoc_phan" placeholder="VD: IT104" required />
+			<small>Ký hiệu mã số của học phần</small>
+		</div>
+
+		<div class="admin-form-group">
+			<label>
+				<i class="fa-solid fa-heading"></i>
+				<span>Tên Học phần</span>
+			</label>
+			<input type="text" name="ten_hoc_phan" placeholder="VD: Hệ quản trị CSDL" required />
+			<small>Tên đầy đủ của học phần</small>
+		</div>
+
+		<div class="admin-form-group">
+			<label>
+				<i class="fa-solid fa-star"></i>
+				<span>Số tín chỉ</span>
+			</label>
+			<input type="number" name="so_tin_chi" placeholder="VD: 3" min="1" required />
+			<small>Số tín chỉ của học phần</small>
+		</div>
+
+		<div class="admin-form-group">
+			<label>
+				<i class="fa-solid fa-sitemap"></i>
+				<span>Khoa quản lý</span>
+			</label>
+			<select name="khoa_quan_ly_id" required>
+				<option value="">-- Chọn Khoa --</option>
+			</select>
+			<small>Lựa chọn khoa/viện quản lý học phần này</small>
+		</div>
+
+		<div class="admin-form-actions">
+			<button type="submit" class="btn-submit">
+				<i class="fa-solid fa-save"></i>Thêm Mới
+			</button>
+			<a href="{{ url_for('course.admin_courses') }}" class="btn-cancel">
+				<i class="fa-solid fa-times"></i>Hủy
+			</a>
+		</div>
+	</form>
+</div>
+
+<script>
+fetch('/api/faculties?limit=1000').then(r => r.json()).then(data => {
+	const select = document.querySelector('select[name="khoa_quan_ly_id"]');
+	data.data.forEach(f => {
+		const opt = document.createElement('option');
+		opt.value = f.id;
+		opt.textContent = f.ten;
+		select.appendChild(opt);
+	});
+});
+</script>
 {% endblock %}
 

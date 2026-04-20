@@ -1,5 +1,4 @@
 import io
-import os
 from urllib.parse import quote
 
 from flask import Blueprint, jsonify, request, render_template, redirect, url_for, session, send_file
@@ -799,18 +798,21 @@ def admin_faculty_create_in_school(school_id):
     school = Truong.query.get_or_404(school_id)
     
     if request.method == 'POST':
-        ma = request.form.get('ma_khoa')
-        ten = request.form.get('ten_khoa')
+        faculty_id = request.form.get('faculty_id')
         
-        if not ma or not ten:
-            return render_template('admin_faculty_form_in_school.html', school=school, error='Vui lòng nhập đầy đủ')
+        if not faculty_id:
+            # Get all available faculties not in this school
+            all_faculties = KhoaVien.query.filter(KhoaVien.truong_id != school_id).all()
+            return render_template('admin_faculty_form_in_school.html', school=school, faculties=all_faculties, error='Vui lòng chọn Khoa/Viện')
         
-        faculty = KhoaVien(truong_id=school_id, ma_khoa=ma, ten_khoa=ten)
-        db.session.add(faculty)
+        faculty = KhoaVien.query.get_or_404(faculty_id)
+        faculty.truong_id = school_id
         db.session.commit()
         return redirect(url_for('course.admin_school_detail', id=school_id))
     
-    return render_template('admin_faculty_form_in_school.html', school=school)
+    # Get all available faculties not in this school
+    all_faculties = KhoaVien.query.filter(KhoaVien.truong_id != school_id).all()
+    return render_template('admin_faculty_form_in_school.html', school=school, faculties=all_faculties)
 
 
 @course_bp.route('/admin/faculties/<int:faculty_id>/edit', methods=['GET', 'POST'])
@@ -826,7 +828,156 @@ def admin_faculty_edit(faculty_id):
         db.session.commit()
         return redirect(url_for('course.admin_school_detail', id=faculty.truong_id))
     
-    return render_template('admin_faculty_form_in_school.html', school=faculty.truong, faculty=faculty)
+    # Get all available faculties not in this school for edit mode
+    all_faculties = KhoaVien.query.filter(KhoaVien.truong_id != faculty.truong_id).all()
+    return render_template('admin_faculty_form_in_school.html', school=faculty.truong, faculty=faculty, faculties=all_faculties)
+
+
+@course_bp.route('/admin/majors/<int:major_id>', methods=['GET', 'POST'])
+def admin_major_detail(major_id):
+    if not check_admin():
+        return redirect(url_for('course.login'))
+
+    major = NganhHoc.query.get_or_404(major_id)
+
+    # Handle POST request (form submission)
+    if request.method == 'POST':
+        major.ma_nganh = request.form.get('ma_nganh', major.ma_nganh).strip()
+        major.ten_nganh = request.form.get('ten_nganh', major.ten_nganh).strip()
+        khoa_id = request.form.get('khoa_id')
+
+        if not major.ma_nganh or not major.ten_nganh or not khoa_id:
+            return render_template('admin_major_detail.html', major=major,
+                                 error='Vui lòng nhập đầy đủ thông tin')
+
+        try:
+            major.khoa_id = int(khoa_id)
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+            return render_template('admin_major_detail.html', major=major,
+                                 error='Lỗi khi cập nhật ngành')
+
+    # Get version - either from query param or first available
+    version_id = request.args.get('version_id', type=int)
+
+    if version_id:
+        version = PhienBanCT.query.filter_by(id=version_id, nganh_id=major_id).first()
+    else:
+        version = PhienBanCT.query.filter_by(nganh_id=major_id).first()
+
+    curriculum_list = []
+    total_credits = 0
+
+    if version:
+        curriculum_list = KhungChuongTrinh.query.filter_by(phien_ban_id=version.id) \
+            .order_by(KhungChuongTrinh.hoc_ky_du_kien.asc()) \
+            .all()
+        total_credits = sum(item.hoc_phan.so_tin_chi for item in curriculum_list)
+
+    return render_template('admin_major_detail.html', major=major, version=version,
+                         curriculum_list=curriculum_list, total_credits=total_credits)
+
+
+@course_bp.route('/admin/faculties/<int:faculty_id>/majors/create', methods=['GET', 'POST'])
+def admin_faculty_major_create(faculty_id):
+    if not check_admin():
+        return redirect(url_for('course.login'))
+
+    faculty = KhoaVien.query.get_or_404(faculty_id)
+
+    if request.method == 'POST':
+        major_id = request.form.get('major_id', '').strip()
+
+        if not major_id:
+            # Get all available majors not in this faculty
+            all_majors = NganhHoc.query.filter(NganhHoc.khoa_id != faculty_id).all()
+            return render_template(
+                'admin_major_form_in_faculty.html',
+                school=faculty.truong,
+                faculty=faculty,
+                majors=all_majors,
+                error='Vui lòng chọn ngành học'
+            )
+
+        try:
+            major = NganhHoc.query.get_or_404(major_id)
+            major.khoa_id = faculty_id
+            db.session.commit()
+            return redirect(url_for('course.admin_faculty_detail', faculty_id=faculty_id))
+        except Exception:
+            db.session.rollback()
+            all_majors = NganhHoc.query.filter(NganhHoc.khoa_id != faculty_id).all()
+            return render_template(
+                'admin_major_form_in_faculty.html',
+                school=faculty.truong,
+                faculty=faculty,
+                majors=all_majors,
+                error='Lỗi khi thêm ngành'
+            )
+
+    # Get all available majors not in this faculty
+    all_majors = NganhHoc.query.filter(NganhHoc.khoa_id != faculty_id).all()
+    return render_template('admin_major_form_in_faculty.html', school=faculty.truong, faculty=faculty, majors=all_majors)
+
+
+@course_bp.route('/admin/major/create', methods=['GET', 'POST'])
+def admin_major_create():
+    if not check_admin():
+        return redirect(url_for('course.login'))
+
+    if request.method == 'POST':
+        ma = request.form.get('ma_nganh', '').strip()
+        ten = request.form.get('ten_nganh', '').strip()
+        khoa_id = request.form.get('khoa_id')
+
+        if not ma or not ten or not khoa_id:
+            return render_template('admin_major_form.html', error='Vui lòng nhập đầy đủ thông tin')
+
+        try:
+            major = NganhHoc(khoa_id=int(khoa_id), ma_nganh=ma, ten_nganh=ten)
+            db.session.add(major)
+            db.session.commit()
+            return redirect(url_for('course.admin_faculty_detail', faculty_id=int(khoa_id)))
+        except Exception:
+            db.session.rollback()
+            return render_template('admin_major_form.html', error='Lỗi khi tạo ngành hoặc mã ngành đã tồn tại')
+
+    return render_template('admin_major_form.html')
+
+
+@course_bp.route('/admin/majors/<int:major_id>/edit', methods=['GET', 'POST'])
+def admin_major_edit(major_id):
+    if not check_admin():
+        return redirect(url_for('course.login'))
+
+    # Redirect to detail page (which now has the form integrated)
+    version_id = request.args.get('version_id')
+    if version_id:
+        return redirect(url_for('course.admin_major_detail', major_id=major_id, version_id=version_id))
+    return redirect(url_for('course.admin_major_detail', major_id=major_id))
+
+
+@course_bp.route('/api/admin/majors/<int:id>', methods=['DELETE'])
+def admin_delete_major(id):
+    if not check_admin():
+        return jsonify({"error": "Unauthorized"}), 401
+
+    major = NganhHoc.query.get_or_404(id)
+
+    try:
+        # Xóa các phiên bản CT và khung chương trình liên quan trước
+        for version in list(major.phien_ban_cts):
+            KhungChuongTrinh.query.filter_by(phien_ban_id=version.id).delete(synchronize_session=False)
+            db.session.delete(version)
+
+        faculty_id = major.khoa_id
+        db.session.delete(major)
+        db.session.commit()
+        return jsonify({"status": "success", "faculty_id": faculty_id})
+    except Exception:
+        db.session.rollback()
+        return jsonify({"error": "Không thể xóa ngành"}), 400
 
 
 @course_bp.route('/api/admin/stats', methods=['GET'])
@@ -851,29 +1002,6 @@ def admin_delete_school(id):
     db.session.delete(school)
     db.session.commit()
     return jsonify({"status": "success"})
-
-
-@course_bp.route('/api/admin/faculties', methods=['GET'])
-def admin_list_faculties():
-    if not check_admin():
-        return jsonify({"error": "Unauthorized"}), 401
-    
-    page = request.args.get('page', 1, type=int)
-    faculties = KhoaVien.query.paginate(page=page, per_page=20, error_out=False)
-    
-    return jsonify({
-        "status": "success",
-        "total": faculties.total,
-        "pages": faculties.pages,
-        "current_page": faculties.page,
-        "data": [{
-            "id": f.id,
-            "ma": f.ma_khoa,
-            "ten": f.ten_khoa,
-            "truong": f.truong.ten_truong if f.truong else "",
-            "count_nganh": len(f.nganhs)
-        } for f in faculties.items]
-    })
 
 
 @course_bp.route('/admin/faculties', methods=['GET'])
@@ -913,18 +1041,36 @@ def admin_school_create_page():
     return render_template('admin_school_form.html')
 
 
-@course_bp.route('/admin/faculty/create', methods=['GET'])
-def admin_faculty_create():
+@course_bp.route('/admin/faculty/create', methods=['GET', 'POST'])
+def admin_faculty_create_form():
     if not check_admin():
         return redirect(url_for('course.login'))
-    return render_template('admin_faculty_form.html')
+
+    if request.method == 'POST':
+        ma = request.form.get('ma_khoa')
+        ten = request.form.get('ten_khoa')
+        truong_id = request.form.get('truong_id')
+
+        if not ma or not ten or not truong_id:
+            return render_template('admin_faculty_create_form.html', error='Vui lòng nhập đầy đủ thông tin')
+
+        try:
+            faculty = KhoaVien(truong_id=int(truong_id), ma_khoa=ma, ten_khoa=ten)
+            db.session.add(faculty)
+            db.session.commit()
+            return redirect(url_for('course.admin_faculties'))
+        except:
+            return render_template('admin_faculty_create_form.html', error='Lỗi khi tạo Khoa/Viện')
+
+    schools = Truong.query.all()
+    return render_template('admin_faculty_create_form.html', schools=schools)
 
 
-@course_bp.route('/admin/major/create', methods=['GET'])
-def admin_major_create():
-    if not check_admin():
-        return redirect(url_for('course.login'))
-    return render_template('admin_major_form.html')
+@course_bp.route('/admin/major/create-page', methods=['GET'])
+def admin_major_create_page():
+  if not check_admin():
+    return redirect(url_for('course.login'))
+  return redirect(url_for('course.admin_major_create'))
 
 
 @course_bp.route('/admin/course/create', methods=['GET'])
@@ -941,12 +1087,149 @@ def admin_user_create():
     return render_template('admin_user_form.html')
 
 
-@course_bp.route('/api/admin/faculties/<int:id>', methods=['DELETE'])
-def admin_delete_faculty(id):
+@course_bp.route('/api/admin/versions/major/<int:major_id>', methods=['GET'])
+def admin_get_versions(major_id):
     if not check_admin():
         return jsonify({"error": "Unauthorized"}), 401
     
-    faculty = KhoaVien.query.get_or_404(id)
-    db.session.delete(faculty)
-    db.session.commit()
-    return jsonify({"status": "success"})
+    versions = PhienBanCT.query.filter_by(nganh_id=major_id).all()
+    data = [{
+        "id": v.id,
+        "ma_phien_ban": v.ma_phien_ban,
+        "nam_bat_dau": v.nam_bat_dau
+    } for v in versions]
+
+    return jsonify({"status": "success", "data": data})
+
+
+@course_bp.route('/api/admin/versions', methods=['POST'])
+def admin_create_version():
+    if not check_admin():
+        return jsonify({"error": "Unauthorized"}), 401
+
+    try:
+        data = request.get_json()
+        nganh_id = data.get('nganh_id')
+        ma_phien_ban = data.get('ma_phien_ban', '').strip()
+        nam_bat_dau = data.get('nam_bat_dau')
+
+        if not ma_phien_ban or not nam_bat_dau:
+            return jsonify({"error": "Thiếu mã phiên bản hoặc năm"}), 400
+
+        # Check if version already exists
+        existing = PhienBanCT.query.filter_by(
+            nganh_id=int(nganh_id),
+            ma_phien_ban=ma_phien_ban
+        ).first()
+
+        if existing:
+            return jsonify({"error": "Phiên bản này đã tồn tại"}), 400
+
+        version = PhienBanCT(
+            nganh_id=int(nganh_id),
+            ma_phien_ban=ma_phien_ban,
+            nam_bat_dau=int(nam_bat_dau)
+        )
+        db.session.add(version)
+        db.session.commit()
+        return jsonify({"status": "success", "data": {
+            "id": version.id,
+            "ma_phien_ban": version.ma_phien_ban,
+            "nam_bat_dau": version.nam_bat_dau
+        }})
+    except Exception as e:
+        db.session.rollback()
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": f"Lỗi: {str(e)}"}), 400
+
+
+@course_bp.route('/api/admin/courses/available', methods=['GET'])
+def admin_get_available_courses():
+    if not check_admin():
+        return jsonify({"error": "Unauthorized"}), 401
+
+    major_id = request.args.get('major_id', type=int)
+    version_id = request.args.get('version_id', type=int)
+
+    # Lấy danh sách học phần chưa được thêm vào phiên bản này
+    existing = db.session.query(KhungChuongTrinh.hoc_phan_id).filter_by(phien_ban_id=version_id).all()
+    existing_ids = [e[0] for e in existing]
+
+    # Lấy tất cả học phần trừ những cái đã có
+    if existing_ids:
+        courses = HocPhan.query.filter(HocPhan.id.notin_(existing_ids)).all()
+    else:
+        courses = HocPhan.query.all()
+
+    data = [{
+        "id": c.id,
+        "ma": c.ma_hoc_phan,
+        "ten": c.ten_hoc_phan,
+        "tin_chi": c.so_tin_chi,
+        "khoa": c.khoa_quan_ly.ten_khoa if c.khoa_quan_ly else ""
+    } for c in courses]
+
+    return jsonify({"status": "success", "data": data})
+
+
+@course_bp.route('/api/admin/curriculum', methods=['POST'])
+def admin_add_curriculum():
+    if not check_admin():
+        return jsonify({"error": "Unauthorized"}), 401
+
+    try:
+        data = request.get_json()
+        phien_ban_id = data.get('phien_ban_id')
+        hoc_phan_id = data.get('hoc_phan_id')
+        hoc_ky = data.get('hoc_ky', 1)
+        loai_mon = data.get('loai_mon', 'Bắt buộc')
+
+        if not phien_ban_id or not hoc_phan_id:
+            return jsonify({"error": "Thiếu phiên bản hoặc học phần"}), 400
+
+        # Check if already exists
+        existing = KhungChuongTrinh.query.filter_by(
+            phien_ban_id=int(phien_ban_id),
+            hoc_phan_id=int(hoc_phan_id)
+        ).first()
+
+        if existing:
+            return jsonify({"error": "Học phần này đã có trong phiên bản này"}), 400
+
+        curriculum = KhungChuongTrinh(
+            phien_ban_id=int(phien_ban_id),
+            hoc_phan_id=int(hoc_phan_id),
+            hoc_ky_du_kien=int(hoc_ky),
+            loai_mon=loai_mon
+        )
+        db.session.add(curriculum)
+        db.session.commit()
+        return jsonify({"status": "success"})
+    except Exception as e:
+        db.session.rollback()
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": f"Lỗi: {str(e)}"}), 400
+
+
+@course_bp.route('/api/admin/curriculum/<int:phien_ban_id>/<int:hoc_phan_id>', methods=['DELETE'])
+def admin_delete_curriculum(phien_ban_id, hoc_phan_id):
+    if not check_admin():
+        return jsonify({"error": "Unauthorized"}), 401
+
+    try:
+        curriculum = KhungChuongTrinh.query.filter_by(
+            phien_ban_id=phien_ban_id,
+            hoc_phan_id=hoc_phan_id
+        ).first()
+
+        if not curriculum:
+            return jsonify({"error": "Không tìm thấy"}), 404
+
+        db.session.delete(curriculum)
+        db.session.commit()
+        return jsonify({"status": "success"})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 400

@@ -5,7 +5,7 @@
 {% block extra_css %}
 <style>
     .admin-page-header {
-        background: linear-gradient(135deg, var(--neu-blue) 0%, #0652A3 100%);
+    	background: linear-gradient(135deg, var(--neu-blue) 0%, #0d3d6f 100%);
         color: white;
         padding: 30px 0;
         margin-bottom: 30px;
@@ -15,10 +15,28 @@
         font-size: 2rem;
         font-weight: 700;
     }
+    .admin-page-header a {
+        color: rgba(255,255,255,0.9);
+        text-decoration: none;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        border-radius: 8px;
+        margin-bottom: 10px;
+    }
 
+    .admin-page-header a:hover {
+        color: white;
+        background-color: rgba(255,255,255,0.15);
+        transform: translateX(-3px);
+    }
     .admin-toolbar {
         display: flex;
         justify-content: space-between;
+        align-items: center;
         margin-bottom: 25px;
         gap: 15px;
     }
@@ -51,6 +69,7 @@
         background: white;
         border-radius: 12px;
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        overflow: hidden;
     }
 
     .admin-table {
@@ -65,35 +84,39 @@
 
     .admin-table th {
         padding: 15px;
-        text-align: left;
         font-weight: 600;
+        text-align: center;
     }
 
     .admin-table td {
         padding: 15px;
         border-bottom: 1px solid #EEE;
+        text-align: center;
     }
 
-    .badge {
-        background-color: var(--neu-blue);
-        color: white;
-        padding: 4px 10px;
-        border-radius: 20px;
-        font-size: 0.85rem;
+    .admin-table tbody tr:hover {
+        background-color: var(--bg-light);
     }
 
     .table-actions {
         display: flex;
         gap: 8px;
+        justify-content: center;
     }
 
     .btn-edit, .btn-delete {
-        padding: 6px 12px;
+        padding: 10px 16px;
         border: none;
-        border-radius: 6px;
+        border-radius: 8px;
         font-size: 0.85rem;
         font-weight: 600;
         cursor: pointer;
+        height: 30px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+        transition: all 0.2s;
     }
 
     .btn-edit {
@@ -101,14 +124,237 @@
         color: white;
     }
 
+    .btn-edit:hover {
+        background-color: #0652A3;
+        transform: translateY(-2px);
+    }
+
     .btn-delete {
         background-color: #DC3545;
         color: white;
     }
 
-    .empty-state {
+    .btn-delete:hover {
+        background-color: #c82333;
+        transform: translateY(-2px);
+    }
+
+    .badge {
+        background-color: var(--neu-blue);
+        color: white;
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-weight: 600;
+        display: inline-block;
+    }
+
+    .view-controls {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+    }
+
+    .view-toggle {
+        display: flex;
+        gap: 0;
+        border: 2px solid #ddd;
+        border-radius: 8px;
+        overflow: hidden;
+        background: white;
+    }
+
+    .view-btn {
+        padding: 8px 16px;
+        border: none;
+        background: white;
+        color: var(--text-main);
+        cursor: pointer;
+        font-weight: 600;
+        height: 45px;
+        font-size: 0.9rem;
+        transition: all 0.3s;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .view-btn:hover {
+        background: #f5f5f5;
+    }
+
+    .view-btn.active {
+        background: var(--neu-blue);
+        color: white;
+    }
+
+    /* School Card Styles */
+    .school-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 20px;
+    }
+
+    .school-card {
+        background: white;
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        transition: all 0.3s;
+        border-left: 5px solid var(--neu-blue);
+        display: flex;
+        flex-direction: column;
+    }
+
+    .school-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+    }
+
+    .school-code {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        margin-bottom: 8px;
+        font-weight: 500;
+    }
+
+    .school-name {
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: var(--text-main);
+        margin-bottom: 12px;
+    }
+
+    .school-info {
+        font-size: 0.9rem;
+        color: var(--text-muted);
+        margin-bottom: 16px;
+        flex-grow: 1;
+    }
+
+    .school-info strong {
+        color: var(--text-main);
+    }
+
+    .school-actions {
+        display: flex;
+        gap: 8px;
+        margin-top: auto;
+    }
+
+    .school-actions .btn-edit,
+    .school-actions .btn-delete {
+        flex: 1;
+        padding: 8px 12px;
+        border: none;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        cursor: pointer;
         text-align: center;
-        padding: 40px;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+    }
+
+    .school-actions .btn-edit {
+        background-color: var(--neu-blue);
+        color: white;
+    }
+
+    .school-actions .btn-edit:hover {
+        background-color: #0652A3;
+        transform: translateY(-2px);
+    }
+
+    .school-actions .btn-delete {
+        background-color: #DC3545;
+        color: white;
+    }
+
+    .school-actions .btn-delete:hover {
+        background-color: #c82333;
+        transform: translateY(-2px);
+    }
+
+    .table-view {
+        display: none;
+    }
+
+    .table-view.active {
+        display: block;
+    }
+
+    .card-view.hidden {
+        display: none;
+    }
+
+    .empty-state {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        text-align: center;
+        padding: 60px 20px;
+        color: var(--text-muted);
+    }
+
+    .empty-state-icon {
+        font-size: 3rem;
+        margin-bottom: 15px;
+        opacity: 0.5;
+        color: var(--neu-blue);
+    }
+
+    .empty-state h3 {
+        font-size: 1.3rem;
+        margin-bottom: 10px;
+        color: var(--text-main);
+        font-weight: 600;
+    }
+
+    .empty-state p {
+        margin: 0;
+        font-size: 0.95rem;
+    }
+
+    .btn-add {
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+
+    .btn-add:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(255, 159, 67, 0.3);
+    }
+
+    .admin-toolbar {
+        flex-wrap: wrap;
+    }
+
+    .admin-search {
+        flex: 1;
+        min-width: 200px;
+    }
+
+    @media (max-width: 768px) {
+        .admin-toolbar {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .view-controls {
+            width: 100%;
+            justify-content: space-between;
+        }
+
+        .btn-add {
+            flex: 1;
+        }
+
+        .school-grid {
+            grid-template-columns: 1fr;
+        }
     }
 </style>
 {% endblock %}
@@ -116,83 +362,163 @@
 {% block content %}
 <div class="admin-page-header">
     <div class="container">
-        <a href="{{ url_for('course.admin') }}" style="color: rgba(255,255,255,0.7); text-decoration: none;">← Quay lại</a>
+       <a href="{{ url_for('course.admin') }}"
+   style=" color: rgba(255,255,255,0.7); text-decoration: none;">
+   ← Quay lại trang Dashboard </a>
         <h1><i class="fa-solid fa-building me-3"></i>Quản lý Trường</h1>
     </div>
 </div>
 
 <div class="container" style="padding: 30px 0;">
-    <div class="admin-toolbar">
-        <div class="admin-search">
-            <input type="text" id="searchInput" placeholder="Tìm kiếm..." />
-        </div>
-        <a href="{{ url_for('course.admin_school_create') }}" class="btn-add">
-            <i class="fa-solid fa-plus"></i> Thêm
-        </a>
-    </div>
+	<div class="admin-toolbar">
+		<div class="admin-search">
+			<input type="text" id="searchInput" placeholder="Tìm kiếm..." />
+		</div>
+		<div class="view-controls">
+			<div class="view-toggle">
+				<button class="view-btn active" onclick="switchView('card')">
+					<i class="fa-solid fa-th"></i> Card
+				</button>
+				<button class="view-btn" onclick="switchView('table')">
+					<i class="fa-solid fa-table"></i> Bảng
+				</button>
+			</div>
+			<a href="{{ url_for('course.admin_school_create') }}" class="btn-add">
+				<i class="fa-solid fa-plus"></i> Thêm
+			</a>
+		</div>
+	</div>
 
-    <div class="table-container">
-        <table class="admin-table">
-            <thead>
-                <tr>
-                    <th>Mã</th>
-                    <th>Tên Trường</th>
-                    <th>Khoa</th>
-                    <th>Hành động</th>
-                </tr>
-            </thead>
-            <tbody id="tbody">
-                <tr><td colspan="4" style="text-align: center; padding: 20px;">Đang tải...</td></tr>
-            </tbody>
-        </table>
-    </div>
+	<!-- Card View -->
+	<div class="card-view active" id="cardView">
+		<div id="cardContainer" class="school-grid"></div>
+	</div>
+
+	<!-- Table View -->
+	<div class="table-view" id="tableView">
+		<div class="table-container">
+			<table class="admin-table">
+				<thead>
+					<tr>
+						<th>Mã</th>
+						<th>Tên Trường</th>
+						<th>Khoa</th>
+						<th>Hành động</th>
+					</tr>
+				</thead>
+				<tbody id="tbody">
+					<tr><td colspan="4" style="text-align: center; padding: 20px;">Đang tải...</td></tr>
+				</tbody>
+			</table>
+		</div>
+	</div>
 </div>
 
 <script>
-function load() {
-    fetch('/api/schools')
-        .then(r => r.json())
-        .then(data => {
-            const tbody = document.getElementById('tbody');
-            if (data.data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px;">Không có dữ liệu</td></tr>';
-            } else {
-                tbody.innerHTML = data.data.map(s => `
-                    <tr>
-                        <td><strong>${s.ma}</strong></td>
-                        <td><a href="/admin/schools/${s.id}" style="color: var(--neu-blue); text-decoration: none; font-weight: 500;">${s.ten}</a></td>
-                        <td><span class="badge">${s.count_khoa}</span></td>
-                        <td>
-                            <a href="/admin/schools/${s.id}/edit" class="btn-edit">Sửa</a>
-                            <button onclick="if(confirm('Xóa?')) fetch('/api/admin/schools/${s.id}', {method:'DELETE'}).then(()=>load())" class="btn-delete">Xóa</button>
-                        </td>
-                    </tr>
-                `).join('');
-            }
-        })
-        .catch(e => {
-            document.getElementById('tbody').innerHTML = '<tr><td colspan="4" style="text-align: center; color: red;">Lỗi: ' + e.message + '</td></tr>';
-        });
+function renderCardView(data) {
+	const container = document.getElementById('cardContainer');
+	if (data.length === 0) {
+		container.innerHTML = `
+			<div class="empty-state" style="grid-column: 1 / -1;">
+				<div class="empty-state-icon">
+					<i class="fa-solid fa-inbox"></i>
+				</div>
+				<h3>Không có dữ liệu</h3>
+				<p>Hãy thêm trường mới để bắt đầu</p>
+			</div>
+		`;
+	} else {
+		container.innerHTML = data.map(s => `
+			<div class="school-card">
+				<div class="school-code">${s.ma}</div>
+				<div class="school-name">
+					<a href="/admin/schools/${s.id}" style="color: var(--neu-blue); text-decoration: none;">${s.ten}</a>
+				</div>
+				<div class="school-info">
+					<strong>${s.count_khoa}</strong> Khoa/Viện
+				</div>
+			<div class="school-actions">
+				<a href="/admin/schools/${s.id}/edit" class="btn-edit"><i class="fa-solid fa-edit"></i>Sửa</a>
+				<button onclick="if(confirm('Xóa?')) fetch('/api/admin/schools/${s.id}', {method:'DELETE'}).then(()=>load())" class="btn-delete"><i class="fa-solid fa-trash"></i>Xóa</button>
+			</div>
+			</div>
+		`).join('');
+	}
 }
+
+function renderTableView(data) {
+	const tbody = document.getElementById('tbody');
+	if (data.length === 0) {
+		tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px;">Không có dữ liệu</td></tr>';
+	} else {
+		tbody.innerHTML = data.map(s => `
+			<tr>
+				<td><strong>${s.ma}</strong></td>
+				<td><a href="/admin/schools/${s.id}" style="color: var(--neu-blue); text-decoration: none; font-weight: 500;">${s.ten}</a></td>
+				<td><span class="badge">${s.count_khoa}</span></td>
+				<td>
+					<div class="table-actions">
+						<a href="/admin/schools/${s.id}/edit" class="btn-edit">Sửa</a>
+						<button onclick="if(confirm('Xóa?')) fetch('/api/admin/schools/${s.id}', {method:'DELETE'}).then(()=>load())" class="btn-delete">Xóa</button>
+					</div>
+				</td>
+			</tr>
+		`).join('');
+	}
+}
+
+function load() {
+	fetch('/api/schools')
+		.then(r => r.json())
+		.then(data => {
+			renderCardView(data.data);
+			renderTableView(data.data);
+		})
+		.catch(e => {
+			document.getElementById('tbody').innerHTML = '<tr><td colspan="4" style="text-align: center; color: red;">Lỗi: ' + e.message + '</td></tr>';
+		});
+}
+
+function switchView(viewType) {
+	const cardView = document.getElementById('cardView');
+	const tableView = document.getElementById('tableView');
+	const buttons = document.querySelectorAll('.view-btn');
+
+	buttons.forEach(btn => btn.classList.remove('active'));
+
+	if (viewType === 'card') {
+		cardView.classList.add('active');
+		cardView.classList.remove('hidden');
+		tableView.classList.remove('active');
+		tableView.classList.add('hidden');
+		buttons[0].classList.add('active');
+		localStorage.setItem('schoolView', 'card');
+	} else if (viewType === 'table') {
+		cardView.classList.remove('active');
+		cardView.classList.add('hidden');
+		tableView.classList.add('active');
+		tableView.classList.remove('hidden');
+		buttons[1].classList.add('active');
+		localStorage.setItem('schoolView', 'table');
+	}
+}
+
 load();
 
 document.getElementById('searchInput').addEventListener('input', function(e) {
-    const q = e.target.value;
-    fetch(`/api/schools?q=${q}`)
-        .then(r => r.json())
-        .then(data => {
-            document.getElementById('tbody').innerHTML = data.data.map(s => `
-                <tr>
-                    <td><strong>${s.ma}</strong></td>
-                    <td>${s.ten}</td>
-                    <td><span class="badge">${s.count_khoa}</span></td>
-                    <td>
-                        <a href="/admin/schools/${s.id}/edit" class="btn-edit">Sửa</a>
-                        <button onclick="if(confirm('Xóa?')) fetch('/api/admin/schools/${s.id}', {method:'DELETE'}).then(()=>load())" class="btn-delete">Xóa</button>
-                    </td>
-                </tr>
-            `).join('') || '<tr><td colspan="4" style="text-align: center;">Không tìm thấy</td></tr>';
-        });
+	const q = e.target.value;
+	fetch(`/api/schools?q=${q}`)
+		.then(r => r.json())
+		.then(data => {
+			renderCardView(data.data);
+			renderTableView(data.data);
+		});
+});
+
+// Load saved view preference
+window.addEventListener('load', function() {
+	const savedView = localStorage.getItem('schoolView') || 'card';
+	switchView(savedView);
 });
 </script>
 {% endblock %}
