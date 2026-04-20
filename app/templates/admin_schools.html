@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+
+{% block title %}Quản lý Trường - Admin{% endblock %}
+
+{% block extra_css %}
+<style>
+    .admin-page-header {
+        background: linear-gradient(135deg, var(--neu-blue) 0%, #0652A3 100%);
+        color: white;
+        padding: 30px 0;
+        margin-bottom: 30px;
+    }
+
+    .admin-page-header h1 {
+        font-size: 2rem;
+        font-weight: 700;
+    }
+
+    .admin-toolbar {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 25px;
+        gap: 15px;
+    }
+
+    .admin-search input {
+        padding: 10px 15px;
+        border: 1px solid #DDD;
+        border-radius: 8px;
+        flex: 1;
+    }
+
+    .btn-add {
+        background-color: var(--neu-orange);
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .btn-add:hover {
+        background-color: #e68a2e;
+    }
+
+    .table-container {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    }
+
+    .admin-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .admin-table thead {
+        background-color: var(--neu-blue);
+        color: white;
+    }
+
+    .admin-table th {
+        padding: 15px;
+        text-align: left;
+        font-weight: 600;
+    }
+
+    .admin-table td {
+        padding: 15px;
+        border-bottom: 1px solid #EEE;
+    }
+
+    .badge {
+        background-color: var(--neu-blue);
+        color: white;
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+    }
+
+    .table-actions {
+        display: flex;
+        gap: 8px;
+    }
+
+    .btn-edit, .btn-delete {
+        padding: 6px 12px;
+        border: none;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .btn-edit {
+        background-color: var(--neu-blue);
+        color: white;
+    }
+
+    .btn-delete {
+        background-color: #DC3545;
+        color: white;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 40px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="admin-page-header">
+    <div class="container">
+        <a href="{{ url_for('course.admin') }}" style="color: rgba(255,255,255,0.7); text-decoration: none;">← Quay lại</a>
+        <h1><i class="fa-solid fa-building me-3"></i>Quản lý Trường</h1>
+    </div>
+</div>
+
+<div class="container" style="padding: 30px 0;">
+    <div class="admin-toolbar">
+        <div class="admin-search">
+            <input type="text" id="searchInput" placeholder="Tìm kiếm..." />
+        </div>
+        <a href="{{ url_for('course.admin_school_create') }}" class="btn-add">
+            <i class="fa-solid fa-plus"></i> Thêm
+        </a>
+    </div>
+
+    <div class="table-container">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Mã</th>
+                    <th>Tên Trường</th>
+                    <th>Khoa</th>
+                    <th>Hành động</th>
+                </tr>
+            </thead>
+            <tbody id="tbody">
+                <tr><td colspan="4" style="text-align: center; padding: 20px;">Đang tải...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+function load() {
+    fetch('/api/schools')
+        .then(r => r.json())
+        .then(data => {
+            const tbody = document.getElementById('tbody');
+            if (data.data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px;">Không có dữ liệu</td></tr>';
+            } else {
+                tbody.innerHTML = data.data.map(s => `
+                    <tr>
+                        <td><strong>${s.ma}</strong></td>
+                        <td><a href="/admin/schools/${s.id}" style="color: var(--neu-blue); text-decoration: none; font-weight: 500;">${s.ten}</a></td>
+                        <td><span class="badge">${s.count_khoa}</span></td>
+                        <td>
+                            <a href="/admin/schools/${s.id}/edit" class="btn-edit">Sửa</a>
+                            <button onclick="if(confirm('Xóa?')) fetch('/api/admin/schools/${s.id}', {method:'DELETE'}).then(()=>load())" class="btn-delete">Xóa</button>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+        })
+        .catch(e => {
+            document.getElementById('tbody').innerHTML = '<tr><td colspan="4" style="text-align: center; color: red;">Lỗi: ' + e.message + '</td></tr>';
+        });
+}
+load();
+
+document.getElementById('searchInput').addEventListener('input', function(e) {
+    const q = e.target.value;
+    fetch(`/api/schools?q=${q}`)
+        .then(r => r.json())
+        .then(data => {
+            document.getElementById('tbody').innerHTML = data.data.map(s => `
+                <tr>
+                    <td><strong>${s.ma}</strong></td>
+                    <td>${s.ten}</td>
+                    <td><span class="badge">${s.count_khoa}</span></td>
+                    <td>
+                        <a href="/admin/schools/${s.id}/edit" class="btn-edit">Sửa</a>
+                        <button onclick="if(confirm('Xóa?')) fetch('/api/admin/schools/${s.id}', {method:'DELETE'}).then(()=>load())" class="btn-delete">Xóa</button>
+                    </td>
+                </tr>
+            `).join('') || '<tr><td colspan="4" style="text-align: center;">Không tìm thấy</td></tr>';
+        });
+});
+</script>
+{% endblock %}
+

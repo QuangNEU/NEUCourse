@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+
+{% block title %}Quản lý Người dùng - Admin{% endblock %}
+
+{% block extra_css %}
+<style>
+    .admin-page-header {
+        background: linear-gradient(135deg, var(--neu-blue) 0%, #0652A3 100%);
+        color: white;
+        padding: 30px 0;
+        margin-bottom: 30px;
+    }
+
+    .btn-add {
+        background-color: var(--neu-orange);
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        text-decoration: none;
+    }
+
+    .table-container {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    }
+
+    .admin-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .admin-table thead {
+        background-color: var(--neu-blue);
+        color: white;
+    }
+
+    .admin-table th, .admin-table td {
+        padding: 15px;
+        text-align: left;
+    }
+
+    .badge {
+        padding: 5px 10px;
+        border-radius: 4px;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+
+    .badge-admin {
+        background-color: #007bff;
+        color: white;
+    }
+
+    .badge-user {
+        background-color: #28a745;
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="admin-page-header">
+    <div class="container">
+        <h1><i class="fa-solid fa-users me-3"></i>Quản lý Người dùng</h1>
+    </div>
+</div>
+
+<div class="container" style="padding: 30px 0;">
+    <a href="{{ url_for('course.admin_user_create') }}" class="btn-add">
+        <i class="fa-solid fa-plus"></i> Thêm Người dùng
+    </a>
+
+    <div class="table-container" style="margin-top: 20px;">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Username</th>
+                    <th>Tên</th>
+                    <th>Vai trò</th>
+                    <th>Ngày tạo</th>
+                    <th>Hành động</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr>
+                    <td>{{ user.username }}</td>
+                    <td>{{ user.ho_ten }}</td>
+                    <td>
+                        <span class="badge {% if user.vai_tro == 'Admin' %}badge-admin{% else %}badge-user{% endif %}">
+                            {{ user.vai_tro }}
+                        </span>
+                    </td>
+                    <td>{{ user.created_at.strftime('%d/%m/%Y') if user.created_at else 'N/A' }}</td>
+                    <td>
+                        <button class="btn btn-primary btn-sm">Sửa</button>
+                        <button class="btn btn-danger btn-sm">Xóa</button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
