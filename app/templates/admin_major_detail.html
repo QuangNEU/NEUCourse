@@ -313,6 +313,11 @@
 </div>
 
 <div class="container mb-5">
+    <div id="adminMajorData"
+         data-major-id="{{ major.id }}"
+         data-current-version-id="{{ version.id if version else '' }}"
+         data-has-version="{{ 1 if version else 0 }}"></div>
+
     {% if error %}
     <div class="error-alert">
         <i class="fa-solid fa-circle-exclamation"></i>{{ error }}
@@ -424,7 +429,7 @@
                         <input type="text" class="form-control" placeholder="Tìm kiếm học phần..." id="searchInput">
                         <button class="btn btn-primary" type="button"><i class="fa-solid fa-search"></i></button>
                     </div>
-                    <button class="btn btn-success btn-sm" onclick="openAddCourseModal()">
+                    <button type="button" class="btn btn-success btn-sm" onclick="openAddCourseModal(); return false;">
                         <i class="fa-solid fa-plus"></i> Thêm Học Phần
                     </button>
                 </div>
@@ -470,7 +475,10 @@
                                         <td class="small">{{ item.hoc_phan.khoa_quan_ly.ten_khoa }}</td>
                                         <td class="small text-muted">{{ item.loai_mon }}</td>
                                         <td class="text-center">
-                                            <button class="btn btn-danger btn-sm" onclick="deleteCurriculum({{ version.id }}, {{ item.hoc_phan_id }})">
+                                            <button class="btn btn-danger btn-sm"
+                                                    data-phien-ban-id="{{ version.id }}"
+                                                    data-hoc-phan-id="{{ item.hoc_phan_id }}"
+                                                    onclick="deleteCurriculum(this.dataset.phienBanId, this.dataset.hocPhanId)">
                                                 <i class="fa-solid fa-trash"></i>
                                             </button>
                                         </td>
@@ -505,7 +513,10 @@
                                         <td class="small">{{ item.hoc_phan.khoa_quan_ly.ten_khoa }}</td>
                                         <td class="small text-muted">{{ item.loai_mon }}</td>
                                         <td class="text-center">
-                                            <button class="btn btn-danger btn-sm" onclick="deleteCurriculum({{ version.id }}, {{ item.hoc_phan_id }})">
+                                            <button class="btn btn-danger btn-sm"
+                                                    data-phien-ban-id="{{ version.id }}"
+                                                    data-hoc-phan-id="{{ item.hoc_phan_id }}"
+                                                    onclick="deleteCurriculum(this.dataset.phienBanId, this.dataset.hocPhanId)">
                                                 <i class="fa-solid fa-trash"></i>
                                             </button>
                                         </td>
@@ -542,7 +553,10 @@
                                             <span class="badge bg-warning text-dark">Tự chọn</span>
                                         </td>
                                         <td class="text-center">
-                                            <button class="btn btn-danger btn-sm" onclick="deleteCurriculum({{ version.id }}, {{ item.hoc_phan_id }})">
+                                            <button class="btn btn-danger btn-sm"
+                                                    data-phien-ban-id="{{ version.id }}"
+                                                    data-hoc-phan-id="{{ item.hoc_phan_id }}"
+                                                    onclick="deleteCurriculum(this.dataset.phienBanId, this.dataset.hocPhanId)">
                                                 <i class="fa-solid fa-trash"></i>
                                             </button>
                                         </td>
@@ -594,6 +608,13 @@
 </div>
 
 <script>
+    const pageData = document.getElementById('adminMajorData');
+    const majorId = Number(pageData?.dataset.majorId || 0);
+    const currentVersionId = pageData?.dataset.currentVersionId
+        ? Number(pageData.dataset.currentVersionId)
+        : null;
+    const hasCurrentVersion = pageData?.dataset.hasVersion === '1';
+
     // Initialize on document ready
     document.addEventListener('DOMContentLoaded', function() {
         console.log('Document ready - initializing...');
@@ -632,8 +653,6 @@
     });
 
     function loadVersions() {
-        // Extract major_id from current URL or use the data attribute
-        const majorId = '{{ major.id }}';
         const url = `/api/admin/versions/major/${majorId}`;
         console.log('Loading versions from:', url, 'majorId:', majorId);
 
@@ -699,10 +718,7 @@
                 // 1. Current version from query param (if exists)
                 // 2. K66 version (if exists)
                 // 3. First version (if exists)
-                let selectedValue = '';
-                {% if version %}
-                selectedValue = {{ version.id }};
-                {% endif %}
+                let selectedValue = currentVersionId || '';
 
                 if (!selectedValue && k66Version) {
                     selectedValue = k66Version;
@@ -717,13 +733,11 @@
                         select.value = selectedValue;
                         console.log('Selected version:', selectedValue);
                         // Auto-switch to selected version if not from query param
-                        {% if not version %}
-                        if (k66Version) {
+                        if (!hasCurrentVersion && k66Version) {
                             setTimeout(function() {
                                 switchVersion();
                             }, 100);
                         }
-                        {% endif %}
                     } catch(e) {
                         console.error('Error setting select value:', e);
                     }
@@ -793,7 +807,7 @@
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({
-                nganh_id: {{ major.id }},
+                nganh_id: majorId,
                 ma_phien_ban: maPhienBan,
                 nam_bat_dau: parseInt(namBatDau)
             })
@@ -846,7 +860,7 @@
             if (data.status === 'success') {
                 alert('Xóa phiên bản thành công!');
                 // Reload to refresh the list
-                window.location.href = `/admin/majors/{{ major.id }}`;
+                window.location.href = `/admin/majors/${majorId}`;
             } else {
                 alert('Lỗi: ' + (data.error || data.message || 'Không xác định'));
             }
@@ -888,16 +902,16 @@
 
     // Add curriculum functionality
     function openAddCourseModal() {
-        const versionId = {{ version.id if version else 'null' }};
+        const versionId = currentVersionId;
         if (!versionId) {
             alert('Chưa có phiên bản chương trình');
             return;
         }
 
-        console.log('Opening add course modal for version:', versionId, 'major:', {{ major.id }});
+        console.log('Opening add course modal for version:', versionId, 'major:', majorId);
 
         // Fetch available courses
-        fetch(`/api/admin/courses/available?major_id={{ major.id }}&version_id=${versionId}`)
+        fetch(`/api/admin/courses/available?major_id=${majorId}&version_id=${versionId}`)
             .then(r => {
                 console.log('Fetch response status:', r.status);
                 if (!r.ok) {

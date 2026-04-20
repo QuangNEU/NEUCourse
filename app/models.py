@@ -78,11 +78,19 @@ class DeCuongChiTiet(db.Model):
     hoc_phan_id = db.Column(db.Integer, db.ForeignKey('hoc_phan.id'), nullable=False)
     nam_ap_dung = db.Column(db.String(50), nullable=False)
     trang_thai = db.Column(db.String(20), default='Published')
+    header_content = db.Column(db.Text, default='')
 
     clos = db.relationship('ChuanDauRa', backref='de_cuong', lazy=True)
     lich_trinh = db.relationship('KeHoachGiangDay', backref='de_cuong', lazy=True)
     danh_gia = db.relationship('DanhGiaHocPhan', backref='de_cuong', lazy=True)
     hoc_lieu = db.relationship('HocLieu', backref='de_cuong', lazy=True)
+    de_mucs = db.relationship(
+        'DeMucDeCuong',
+        backref='de_cuong',
+        lazy=True,
+        order_by='DeMucDeCuong.position.asc()',
+        cascade='all, delete-orphan'
+    )
 
 
 # 4. CHI TIẾT NỘI DUNG ĐỀ CƯƠNG
@@ -119,5 +127,14 @@ class HocLieu(db.Model):
     loai = db.Column(db.String(50))
     ten_tai_lieu = db.Column(db.String(255))
     tac_gia = db.Column(db.String(255))
+
+
+class DeMucDeCuong(db.Model):
+    __tablename__ = 'de_muc_de_cuong'
+    id = db.Column(db.Integer, primary_key=True)
+    de_cuong_id = db.Column(db.Integer, db.ForeignKey('de_cuong_chi_tiet.id'), nullable=False)
+    position = db.Column(db.Integer, nullable=False, default=1)
+    title = db.Column(db.String(255), nullable=False)
+    content = db.Column(db.Text, default='')
 
 
