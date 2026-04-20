@@ -59,6 +59,11 @@
 </div>
 
 <div class="container mb-5">
+    <div id="majorDetailData"
+         data-major-id="{{ major.id }}"
+         data-current-version="{{ version.ma_phien_ban }}"
+         data-is-favorite="{{ 1 if is_favorite else 0 }}"></div>
+
     <div class="curriculum-info">
         <div class="row">
             <div class="col-md-3">
@@ -236,9 +241,10 @@
 </div>
 
 <script>
-    const majorId = {{ major.id }};
-    let currentVersion = '{{ version.ma_phien_ban }}';
-    let isFavorite = {{ 'true' if is_favorite else 'false' }};
+    const pageData = document.getElementById('majorDetailData');
+    const majorId = Number(pageData?.dataset.majorId || 0);
+    let currentVersion = pageData?.dataset.currentVersion || '';
+    let isFavorite = pageData?.dataset.isFavorite === '1';
 
     function updateActionLinks() {
         const compareBtn = document.getElementById('compareBtn');
