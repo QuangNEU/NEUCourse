@@ -15,6 +15,31 @@
     .total-row { background-color: #fff3cd !important; font-weight: bold; }
     .text-center { text-align: center; }
     .semester-col { width: 40px; text-align: center; }
+    .toolbar-row { gap: 10px; flex-wrap: wrap; }
+    .toolbar-row .form-select, .toolbar-row .btn { height: 38px; }
+    .btn-neu-action {
+        background-color: var(--neu-blue);
+        border-color: var(--neu-blue);
+        color: #FFF;
+    }
+    .btn-neu-action:hover,
+    .btn-neu-action:focus {
+        background-color: #0652A3;
+        border-color: #0652A3;
+        color: #FFF;
+    }
+    .btn-neu-action.btn-outline-warning {
+        background-color: var(--neu-blue);
+        border-color: var(--neu-blue);
+        color: #FFF;
+    }
+    .btn-neu-action.btn-warning {
+        background-color: #0A6DC7;
+        border-color: #0A6DC7;
+        color: #FFF;
+    }
+    .qr-wrapper { text-align: center; }
+    .qr-wrapper img { width: 220px; height: 220px; border: 1px solid #EEE; border-radius: 8px; }
 </style>
 {% endblock %}
 
@@ -55,8 +80,32 @@
         </div>
     </div>
 
-    <div class="d-flex justify-content-end mb-3">
-        <button class="btn btn-outline-secondary me-2"><i class="fa-solid fa-print"></i> In chương trình</button>
+    <div class="d-flex justify-content-between align-items-center mb-3 toolbar-row">
+        <div class="d-flex align-items-center toolbar-row">
+            <select id="versionSelectToolbar" class="form-select" style="width: 210px;">
+                {% for item in versions %}
+                <option value="{{ item.ma_phien_ban }}" {% if item.id == version.id %}selected{% endif %}>{{ item.ma_phien_ban }}{% if item.nam_bat_dau %} - {{ item.nam_bat_dau }}{% endif %}</option>
+                {% endfor %}
+            </select>
+
+            <a id="compareBtn" href="{{ url_for('course.major_compare_page', id=major.id, left=version.ma_phien_ban) }}" class="btn btn-neu-action">
+                <i class="fa-solid fa-code-compare me-1"></i> So sánh
+            </a>
+
+            <a id="downloadPdfBtn" href="{{ url_for('course.major_pdf', id=major.id, version=version.ma_phien_ban) }}" class="btn btn-neu-action">
+                <i class="fa-solid fa-file-pdf me-1"></i> Tải về PDF
+            </a>
+
+            <button id="shareBtn" type="button" class="btn btn-neu-action" data-bs-toggle="modal" data-bs-target="#shareModal">
+                <i class="fa-solid fa-share-nodes me-1"></i> Chia sẻ
+            </button>
+
+            <button id="favoriteBtn" type="button" class="btn btn-neu-action">
+                <i class="fa-solid fa-star me-1"></i>
+                <span id="favoriteBtnText">{% if is_favorite %}Đã thêm yêu thích{% else %}Thêm vào danh sách yêu thích{% endif %}</span>
+            </button>
+        </div>
+
         <div class="input-group" style="width: 300px;">
             <input type="text" class="form-control" placeholder="Tìm kiếm học phần..." id="searchInput">
             <button class="btn btn-primary" type="button"><i class="fa-solid fa-search"></i></button>
@@ -156,7 +205,117 @@
     </div>
 </div>
 
+<div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1080;">
+    <div id="favoriteToast" class="toast align-items-center text-bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div id="favoriteToastMessage" class="toast-body">Đã thêm vào danh sách yêu thích.</div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="shareModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fa-solid fa-share-nodes me-2"></i>Chia sẻ chương trình</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <label class="form-label">Link chia sẻ</label>
+                <div class="input-group mb-3">
+                    <input id="shareLinkInput" type="text" class="form-control" readonly>
+                    <button id="copyShareLinkBtn" class="btn btn-outline-secondary" type="button">Sao chép</button>
+                </div>
+                <div class="qr-wrapper">
+                    <img id="shareQrImage" alt="QR chia sẻ chương trình">
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
+    const majorId = {{ major.id }};
+    let currentVersion = '{{ version.ma_phien_ban }}';
+    let isFavorite = {{ 'true' if is_favorite else 'false' }};
+
+    function updateActionLinks() {
+        const compareBtn = document.getElementById('compareBtn');
+        const downloadPdfBtn = document.getElementById('downloadPdfBtn');
+        const versionSelect = document.getElementById('versionSelectToolbar');
+        const selectedVersion = versionSelect.value;
+
+        currentVersion = selectedVersion;
+
+        compareBtn.href = `/major/${majorId}/compare?left=${encodeURIComponent(selectedVersion)}`;
+        downloadPdfBtn.href = `/major/${majorId}/pdf?version=${encodeURIComponent(selectedVersion)}`;
+    }
+
+    function renderFavoriteButton() {
+        const favoriteBtnText = document.getElementById('favoriteBtnText');
+
+        if (isFavorite) {
+            favoriteBtnText.textContent = 'Đã thêm yêu thích';
+        } else {
+            favoriteBtnText.textContent = 'Thêm vào danh sách yêu thích';
+        }
+    }
+
+    function showFavoriteToast(message) {
+        const toastElement = document.getElementById('favoriteToast');
+        const messageElement = document.getElementById('favoriteToastMessage');
+        messageElement.textContent = message;
+        const toast = new bootstrap.Toast(toastElement, { delay: 1800 });
+        toast.show();
+    }
+
+    async function loadShareInfo() {
+        const response = await fetch(`/api/major/${majorId}/share-info?version=${encodeURIComponent(currentVersion)}`);
+        const result = await response.json();
+
+        if (result.status === 'success') {
+            document.getElementById('shareLinkInput').value = result.share_url;
+            document.getElementById('shareQrImage').src = result.qr_url;
+        }
+    }
+
+    document.getElementById('versionSelectToolbar').addEventListener('change', function() {
+        const selectedVersion = this.value;
+        window.location.href = `/major/${majorId}?version=${encodeURIComponent(selectedVersion)}`;
+    });
+
+    document.getElementById('favoriteBtn').addEventListener('click', async function() {
+        const response = await fetch('/api/favorites/majors', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ major_id: majorId, version: currentVersion })
+        });
+        const result = await response.json();
+        if (result.status === 'success') {
+            isFavorite = true;
+            renderFavoriteButton();
+            showFavoriteToast(result.added ? 'Đã thêm vào danh sách yêu thích thành công.' : 'Chương trình này đã có trong danh sách yêu thích.');
+        }
+    });
+
+    document.getElementById('shareBtn').addEventListener('click', function() {
+        loadShareInfo();
+    });
+
+    document.getElementById('copyShareLinkBtn').addEventListener('click', async function() {
+        const input = document.getElementById('shareLinkInput');
+        if (!input.value) {
+            return;
+        }
+        await navigator.clipboard.writeText(input.value);
+        this.textContent = 'Đã sao chép';
+        setTimeout(() => { this.textContent = 'Sao chép'; }, 1200);
+    });
+
+    updateActionLinks();
+    renderFavoriteButton();
+
     document.getElementById('searchInput').addEventListener('keyup', function() {
         let filter = this.value.toUpperCase();
         let rows = document.getElementById("curriculumTable").getElementsByTagName("tr");

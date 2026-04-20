@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+
+{% block title %}{% if faculty %}Sửa{% else %}Thêm{% endif %} Khoa/Viện - Admin{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-container {
+        max-width: 600px;
+        margin: 50px auto;
+        background: white;
+        padding: 40px;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .form-header h1 {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: var(--text-main);
+        margin-bottom: 10px;
+    }
+
+    .form-header p {
+        color: var(--text-muted);
+        margin-bottom: 30px;
+    }
+
+    .form-group {
+        margin-bottom: 25px;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: var(--text-main);
+    }
+
+    .form-group input {
+        width: 100%;
+        padding: 12px 15px;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        font-size: 1rem;
+        transition: all 0.2s;
+    }
+
+    .form-group input:focus {
+        outline: none;
+        border-color: var(--neu-blue);
+        box-shadow: 0 0 0 3px rgba(8, 92, 167, 0.1);
+    }
+
+    .form-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 30px;
+    }
+
+    .btn-submit {
+        flex: 1;
+        padding: 12px 20px;
+        background-color: var(--neu-blue);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .btn-submit:hover {
+        background-color: #0652A3;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 10px rgba(8, 92, 167, 0.3);
+    }
+
+    .btn-cancel {
+        flex: 1;
+        padding: 12px 20px;
+        background-color: var(--bg-light);
+        color: var(--text-main);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 1rem;
+        cursor: pointer;
+        text-decoration: none;
+        text-align: center;
+        transition: all 0.2s;
+    }
+
+    .btn-cancel:hover {
+        background-color: #F0F2F5;
+    }
+
+    .error-alert {
+        background-color: #FFE5E5;
+        border: 1px solid #FF6B6B;
+        color: #C92A2A;
+        padding: 12px 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+
+    .school-info {
+        background: var(--bg-light);
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        font-size: 0.95rem;
+    }
+
+    .school-info strong {
+        color: var(--neu-blue);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <div class="form-header">
+        <h1>
+            <i class="fa-solid fa-sitemap me-2"></i>
+            {% if faculty %}Sửa Khoa/Viện{% else %}Thêm Khoa/Viện Mới{% endif %}
+        </h1>
+        <p>Trường: <strong>{{ school.ten_truong }}</strong></p>
+    </div>
+
+    {% if error %}
+    <div class="error-alert">
+        <i class="fa-solid fa-circle-exclamation me-2"></i>{{ error }}
+    </div>
+    {% endif %}
+
+    <div class="school-info">
+        <i class="fa-solid fa-info-circle me-2"></i>
+        <strong>Trường:</strong> {{ school.ten_truong }} ({{ school.ma_truong }})
+    </div>
+
+    <form method="POST">
+        <div class="form-group">
+            <label for="ma_khoa">Mã Khoa/Viện</label>
+            <input type="text" id="ma_khoa" name="ma_khoa"
+                   value="{{ faculty.ma_khoa if faculty else '' }}"
+                   placeholder="VD: CNTT, QTKD" required />
+        </div>
+
+        <div class="form-group">
+            <label for="ten_khoa">Tên Khoa/Viện</label>
+            <input type="text" id="ten_khoa" name="ten_khoa"
+                   value="{{ faculty.ten_khoa if faculty else '' }}"
+                   placeholder="VD: Viện Công nghệ thông tin" required />
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn-submit">
+                <i class="fa-solid fa-save me-2"></i>
+                {% if faculty %}Cập nhật{% else %}Thêm Mới{% endif %}
+            </button>
+            <a href="{{ url_for('course.admin_school_detail', id=school.id) }}" class="btn-cancel">
+                <i class="fa-solid fa-times me-2"></i>Hủy
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+

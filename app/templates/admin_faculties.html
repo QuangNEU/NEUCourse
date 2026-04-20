@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+
+{% block title %}Quản lý Khoa/Viện - Admin{% endblock %}
+
+{% block extra_css %}
+<style>
+    .admin-page-header {
+        background: linear-gradient(135deg, var(--neu-blue) 0%, #0652A3 100%);
+        color: white;
+        padding: 30px 0;
+        margin-bottom: 30px;
+    }
+
+    .admin-page-header h1 {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 5px;
+    }
+
+    .admin-toolbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 25px;
+        gap: 15px;
+    }
+
+    .btn-add {
+        background-color: var(--neu-orange);
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+    }
+
+    .btn-add:hover {
+        background-color: #e68a2e;
+    }
+
+    .table-container {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        overflow: hidden;
+    }
+
+    .admin-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .admin-table thead {
+        background-color: var(--neu-blue);
+        color: white;
+    }
+
+    .admin-table th {
+        padding: 15px;
+        font-weight: 600;
+        text-align: left;
+    }
+
+    .admin-table td {
+        padding: 15px;
+        border-bottom: 1px solid #EEE;
+    }
+
+    .admin-table tbody tr:hover {
+        background-color: var(--bg-light);
+    }
+
+    .table-actions {
+        display: flex;
+        gap: 8px;
+    }
+
+    .btn-edit, .btn-delete {
+        padding: 6px 12px;
+        border: none;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .btn-edit {
+        background-color: var(--neu-blue);
+        color: white;
+    }
+
+    .btn-delete {
+        background-color: #DC3545;
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="admin-page-header">
+    <div class="container">
+        <a href="{{ url_for('course.admin') }}" style="color: rgba(255,255,255,0.7); text-decoration: none;">
+            <i class="fa-solid fa-chevron-left me-2"></i>Quay lại
+        </a>
+        <h1><i class="fa-solid fa-sitemap me-3"></i>Quản lý Khoa/Viện</h1>
+    </div>
+</div>
+
+<div class="container" style="padding: 30px 0;">
+    <div class="admin-toolbar">
+        <input type="text" placeholder="Tìm kiếm..." style="padding: 10px; border: 1px solid #DDD; border-radius: 8px;" />
+        <a href="{{ url_for('course.admin_faculty_create') }}" class="btn-add">
+            <i class="fa-solid fa-plus"></i> Thêm
+        </a>
+    </div>
+
+    <div class="table-container">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Mã</th>
+                    <th>Tên Khoa/Viện</th>
+                    <th>Trường</th>
+                    <th>Ngành</th>
+                    <th>Hành động</th>
+                </tr>
+            </thead>
+            <tbody id="faculties">
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    function loadFaculties() {
+        fetch('/api/admin/faculties')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('faculties').innerHTML = data.data.map(f => `
+                    <tr>
+                        <td>${f.ma}</td>
+                        <td>${f.ten}</td>
+                        <td>${f.truong}</td>
+                        <td><span class="badge bg-primary">${f.count_nganh}</span></td>
+                        <td>
+                            <button class="btn-edit">Sửa</button>
+                            <button class="btn-delete">Xóa</button>
+                        </td>
+                    </tr>
+                `).join('');
+            });
+    }
+    loadFaculties();
+</script>
+{% endblock %}
+

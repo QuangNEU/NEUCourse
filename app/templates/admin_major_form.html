@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}Thêm Ngành - Admin{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-container {
+        max-width: 600px;
+        margin: 50px auto;
+        background: white;
+        padding: 40px;
+        border-radius: 12px;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-group input, .form-group select {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #DDD;
+        border-radius: 8px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <h1>Thêm Ngành</h1>
+    <form method="POST">
+        <div class="form-group">
+            <label>Mã Ngành</label>
+            <input type="text" name="ma_nganh" required />
+        </div>
+        <div class="form-group">
+            <label>Tên Ngành</label>
+            <input type="text" name="ten_nganh" required />
+        </div>
+        <button type="submit" class="btn btn-primary">Thêm</button>
+    </form>
+</div>
+{% endblock %}
+
