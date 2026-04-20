@@ -1,3 +1,5 @@
+from flask import Blueprint, jsonify, request, render_template
+from app.models import db, Truong, KhoaVien, NganhHoc, PhienBanCT, HocPhan, KhungChuongTrinh, DeCuongChiTiet
 from flask import Blueprint, jsonify, request, render_template, redirect, url_for, session
 from ..models import (
     db, Truong, KhoaVien, NganhHoc, PhienBanCT, HocPhan, KhungChuongTrinh,
@@ -188,13 +190,34 @@ def faculty_detail(id):
     faculty = KhoaVien.query.get_or_404(id)
     return render_template('detail.html', type='faculty', item=faculty)
 
+
 @course_bp.route('/major/<int:id>')
 def major_detail(id):
+    # Lấy thông tin ngành
     major = NganhHoc.query.get_or_404(id)
-    # Lấy phiên bản mặc định (phiên bản đầu tiên)
-    version = major.phien_ban_cts[0] if major.phien_ban_cts else None
-    return render_template('detail.html', type='major', item=major, version=version)
 
+    # Lấy phiên bản chương trình đào tạo
+    version = PhienBanCT.query.filter_by(nganh_id=id).first()
+
+    if not version:
+        return "Chưa có khung chương trình cho ngành này", 404
+
+    # Lấy danh sách khung chương trình
+    curriculum_list = KhungChuongTrinh.query.filter_by(phien_ban_id=version.id) \
+        .order_by(KhungChuongTrinh.hoc_ky_du_kien.asc()) \
+        .all()
+
+    # Tính tổng số tín chỉ
+    total_credits = sum(item.hoc_phan.so_tin_chi for item in curriculum_list)
+
+    # Đổi tên file giao diện thành major_detail.html cho đồng bộ
+    return render_template(
+        'major_detail.html',
+        major=major,
+        version=version,
+        curriculum_list=curriculum_list,
+        total_credits=total_credits
+    )
 @course_bp.route('/course/<int:id>')
 def course_detail(id):
     course = HocPhan.query.get_or_404(id)
