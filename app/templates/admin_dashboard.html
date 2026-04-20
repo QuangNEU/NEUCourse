@@ -1,108 +1,20 @@
 {% extends "base.html" %}
 
-{% block title %}Admin Dashboard - NEU Course Management{% endblock %}
+{% block title %}Admin Dashboard{% endblock %}
 
 {% block extra_css %}
 <style>
-    .admin-container {
-        padding: 30px 0;
-    }
-
     .admin-header {
-        background: linear-gradient(135deg, var(--neu-blue) 0%, #0652A3 100%);
+       	background: linear-gradient(135deg, var(--neu-blue) 0%, #0d3d6f 100%);
         color: white;
         padding: 40px 0;
         margin-bottom: 40px;
-        border-radius: 0;
     }
 
     .admin-header h1 {
         font-size: 2.5rem;
         font-weight: 700;
         margin-bottom: 10px;
-    }
-
-    .admin-header p {
-        font-size: 1.1rem;
-        opacity: 0.9;
-    }
-
-    .admin-menu {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-        gap: 20px;
-        margin-bottom: 40px;
-    }
-
-    .admin-card {
-        background: white;
-        border-radius: 12px;
-        padding: 25px;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-        transition: all 0.3s ease;
-        cursor: pointer;
-        border-left: 5px solid var(--neu-blue);
-    }
-
-    .admin-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-    }
-
-    .admin-card-icon {
-        font-size: 2.5rem;
-        color: var(--neu-blue);
-        margin-bottom: 15px;
-    }
-
-    .admin-card h3 {
-        font-size: 1.3rem;
-        font-weight: 700;
-        color: var(--text-main);
-        margin-bottom: 10px;
-    }
-
-    .admin-card p {
-        color: var(--text-muted);
-        font-size: 0.95rem;
-        margin-bottom: 15px;
-    }
-
-    .admin-card-footer {
-        display: flex;
-        gap: 10px;
-        margin-top: 15px;
-    }
-
-    .btn-admin {
-        padding: 8px 16px;
-        border-radius: 6px;
-        font-size: 0.85rem;
-        font-weight: 600;
-        transition: all 0.2s;
-        border: none;
-        cursor: pointer;
-    }
-
-    .btn-admin-primary {
-        background-color: var(--neu-blue);
-        color: white;
-    }
-
-    .btn-admin-primary:hover {
-        background-color: #0652A3;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 10px rgba(8, 92, 167, 0.3);
-    }
-
-    .btn-admin-secondary {
-        background-color: var(--bg-light);
-        color: var(--text-main);
-        border: 1px solid var(--border-color);
-    }
-
-    .btn-admin-secondary:hover {
-        background-color: #F0F2F5;
     }
 
     .admin-stats {
@@ -131,11 +43,87 @@
         color: var(--text-muted);
         font-size: 0.9rem;
     }
+
+    .admin-menu {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+    }
+
+    .admin-card {
+        background: white;
+        border-radius: 12px;
+        padding: 25px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        transition: all 0.3s;
+        border-left: 5px solid var(--neu-blue);
+    }
+
+    .admin-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+    }
+
+    .admin-card-icon {
+        font-size: 2.5rem;
+        color: var(--neu-blue);
+        margin-bottom: 15px;
+    }
+
+    .admin-card h3 {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: var(--text-main);
+        margin-bottom: 10px;
+    }
+
+    .admin-card p {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+        margin-bottom: 15px;
+    }
+
+    .admin-card-footer {
+        display: flex;
+        gap: 10px;
+    }
+
+    .btn-admin {
+        flex: 1;
+        padding: 10px 15px;
+        border: none;
+        border-radius: 6px;
+        font-weight: 600;
+        cursor: pointer;
+        font-size: 0.85rem;
+        transition: all 0.2s;
+        text-decoration: none;
+        text-align: center;
+    }
+
+    .btn-admin-primary {
+        background-color: var(--neu-blue);
+        color: white;
+    }
+
+    .btn-admin-primary:hover {
+        background-color: #0652A3;
+        transform: translateY(-2px);
+    }
+
+    .btn-admin-secondary {
+        background-color: var(--bg-light);
+        color: var(--text-main);
+        border: 1px solid var(--border-color);
+    }
+
+    .btn-admin-secondary:hover {
+        background-color: #F0F2F5;
+    }
 </style>
 {% endblock %}
 
 {% block content %}
-<!-- Admin Header -->
 <div class="admin-header">
     <div class="container">
         <h1><i class="fa-solid fa-gauge-high me-3"></i>Admin Dashboard</h1>
@@ -143,8 +131,7 @@
     </div>
 </div>
 
-<div class="container admin-container">
-    <!-- Statistics -->
+<div class="container">
     <div class="admin-stats">
         <div class="admin-stat-box">
             <div class="admin-stat-number" id="stat-schools">0</div>
@@ -164,87 +151,66 @@
         </div>
     </div>
 
-    <!-- Admin Menu Cards -->
     <div class="admin-menu">
-        <!-- Trường -->
         <div class="admin-card">
             <div class="admin-card-icon"><i class="fa-solid fa-building"></i></div>
             <h3>Quản lý Trường</h3>
-            <p>Tạo, sửa, xóa thông tin về các trường đại học</p>
+            <p>Tạo, sửa, xóa thông tin các trường</p>
             <div class="admin-card-footer">
                 <a href="{{ url_for('course.admin_schools') }}" class="btn-admin btn-admin-primary">Quản lý</a>
                 <a href="{{ url_for('course.admin_school_create') }}" class="btn-admin btn-admin-secondary">+ Thêm</a>
             </div>
         </div>
 
-        <!-- Khoa/Viện -->
         <div class="admin-card">
             <div class="admin-card-icon"><i class="fa-solid fa-sitemap"></i></div>
             <h3>Quản lý Khoa/Viện</h3>
             <p>Quản lý các khoa, viện, phòng ban</p>
             <div class="admin-card-footer">
                 <a href="{{ url_for('course.admin_faculties') }}" class="btn-admin btn-admin-primary">Quản lý</a>
-                <a href="{{ url_for('course.admin_faculty_create') }}" class="btn-admin btn-admin-secondary">+ Thêm</a>
+                <a href="{{ url_for('course.admin_faculty_create_form') }}" class="btn-admin btn-admin-secondary">+ Thêm</a>
             </div>
         </div>
 
-        <!-- Ngành -->
         <div class="admin-card">
             <div class="admin-card-icon"><i class="fa-solid fa-graduation-cap"></i></div>
             <h3>Quản lý Ngành</h3>
-            <p>Quản lý các ngành đào tạo, chương trình</p>
+            <p>Quản lý các ngành đào tạo</p>
             <div class="admin-card-footer">
                 <a href="{{ url_for('course.admin_majors') }}" class="btn-admin btn-admin-primary">Quản lý</a>
                 <a href="{{ url_for('course.admin_major_create') }}" class="btn-admin btn-admin-secondary">+ Thêm</a>
             </div>
         </div>
 
-        <!-- Học phần -->
         <div class="admin-card">
             <div class="admin-card-icon"><i class="fa-solid fa-book"></i></div>
             <h3>Quản lý Học phần</h3>
-            <p>Quản lý các môn học, học phần, tín chỉ</p>
+            <p>Quản lý các môn học, học phần</p>
             <div class="admin-card-footer">
                 <a href="{{ url_for('course.admin_courses') }}" class="btn-admin btn-admin-primary">Quản lý</a>
                 <a href="{{ url_for('course.admin_course_create') }}" class="btn-admin btn-admin-secondary">+ Thêm</a>
             </div>
         </div>
 
-        <!-- Users -->
         <div class="admin-card">
             <div class="admin-card-icon"><i class="fa-solid fa-users"></i></div>
             <h3>Quản lý Người dùng</h3>
-            <p>Quản lý tài khoản, quyền hạn người dùng</p>
+            <p>Quản lý tài khoản, quyền hạn</p>
             <div class="admin-card-footer">
                 <a href="{{ url_for('course.admin_users') }}" class="btn-admin btn-admin-primary">Quản lý</a>
                 <a href="{{ url_for('course.admin_user_create') }}" class="btn-admin btn-admin-secondary">+ Thêm</a>
-            </div>
-        </div>
-
-        <!-- Settings -->
-        <div class="admin-card">
-            <div class="admin-card-icon"><i class="fa-solid fa-cogs"></i></div>
-            <h3>Cấu hình Hệ thống</h3>
-            <p>Cấu hình, backup, log hệ thống</p>
-            <div class="admin-card-footer">
-                <a href="#" class="btn-admin btn-admin-primary">Cài đặt</a>
             </div>
         </div>
     </div>
 </div>
 
 <script>
-    // Load statistics
-    document.addEventListener('DOMContentLoaded', function() {
-        fetch('/api/admin/stats')
-            .then(response => response.json())
-            .then(data => {
-                document.getElementById('stat-schools').textContent = data.schools || 0;
-                document.getElementById('stat-faculties').textContent = data.faculties || 0;
-                document.getElementById('stat-majors').textContent = data.majors || 0;
-                document.getElementById('stat-courses').textContent = data.courses || 0;
-            });
-    });
+fetch('/api/admin/stats').then(r => r.json()).then(data => {
+    document.getElementById('stat-schools').textContent = data.schools || 0;
+    document.getElementById('stat-faculties').textContent = data.faculties || 0;
+    document.getElementById('stat-majors').textContent = data.majors || 0;
+    document.getElementById('stat-courses').textContent = data.courses || 0;
+});
 </script>
 {% endblock %}
 

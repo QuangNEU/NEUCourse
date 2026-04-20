@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}{% if faculty %}Sửa{% else %}Thêm{% endif %} Khoa/Viện - Admin{% endblock %}
+{% block title %}Thêm Ngành - Admin{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -59,17 +59,6 @@
 		color: white !important;
 	}
 
-	.select2-search__field {
-		padding: 8px 12px;
-		border: none !important;
-		background: white;
-		font-size: 0.95rem;
-	}
-
-	.select2-search__field::placeholder {
-		color: #999;
-	}
-
 	.select2-search--inline {
 		padding: 0 !important;
 		border: none !important;
@@ -101,20 +90,34 @@
 		box-shadow: 0 0 0 3px rgba(13, 66, 118, 0.1);
 	}
 
-	/* ...existing code... */
+	.major-info {
+		background: #f8f9fa;
+		padding: 12px;
+		border-radius: 6px;
+		margin-top: 10px;
+		font-size: 0.9rem;
+		color: var(--text-muted);
+	}
+
+	.major-info .label {
+		font-weight: 600;
+		color: var(--text-main);
+		display: block;
+		margin-bottom: 4px;
+	}
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="admin-form-header">
 	<div class="container">
-		<a href="{{ url_for('course.admin_school_detail', id=school.id) }}">
-			<i class="fa-solid fa-chevron-left"></i>Quay lại Quản lý chi tiết trường
+		<a href="/admin/faculties/{{ faculty.id }}">
+			<i class="fa-solid fa-chevron-left"></i>Quay lại Khoa/Viện
 		</a>
 		<h1>
-			<i class="fa-solid fa-sitemap"></i>{% if faculty %}Sửa Khoa/Viện{% else %}Thêm Khoa/Viện mới{% endif %} cho {{ school.ten_truong }}
+			<i class="fa-solid fa-graduation-cap"></i>Thêm Ngành cho {{ faculty.ten_khoa }}
 		</h1>
-
+		<p>Bổ sung thêm ngành học mới cho Khoa/Viện <strong>{{ faculty.ten_khoa }}</strong></p>
 	</div>
 </div>
 
@@ -127,53 +130,38 @@
 
 	<form method="POST">
 		<div class="admin-form-group">
-			<label for="truong_ten">
-				<i class="fa-solid fa-building"></i>
-				<span>Trường</span>
+			<label for="khoa_ten">
+				<i class="fa-solid fa-sitemap"></i>
+				<span>Khoa/Viện</span>
 			</label>
-			<input id="truong_ten" type="text" value="{{ school.ten_truong }}" readonly />
-			<small>Khoa/Viện sẽ thuộc về trường này</small>
+			<input id="khoa_ten" type="text" value="{{ faculty.ten_khoa }}" readonly />
+			<small>Ngành sẽ được thêm vào khoa/viện này</small>
 		</div>
 
-		{% if not faculty %}
 		<div class="admin-form-group">
-			<label for="faculty_id">
-				<i class="fa-solid fa-sitemap"></i>
-				<span>Chọn Khoa/Viện</span>
+			<label for="major_id">
+				<i class="fa-solid fa-graduation-cap"></i>
+				<span>Chọn Ngành Học</span>
 			</label>
-			<select id="faculty_id" name="faculty_id" required>
-				<option value="">-- Chọn Khoa/Viện --</option>
-				{% for fac in faculties %}
-					<option value="{{ fac.id }}">{{ fac.ma_khoa }} - {{ fac.ten_khoa }}</option>
+			<select id="major_id" name="major_id" required>
+				<option value="">-- Chọn Ngành --</option>
+				{% for major in majors %}
+					<option value="{{ major.id }}" data-ma="{{ major.ma_nganh }}">{{ major.ma_nganh }} - {{ major.ten_nganh }}</option>
 				{% endfor %}
 			</select>
-			<small>Chọn một Khoa/Viện từ danh sách có sẵn</small>
+			<small>Chọn một ngành từ danh sách có sẵn</small>
+			<div id="major-info" class="major-info" style="display: none;">
+				<div class="label">Thông tin Ngành:</div>
+				<div><strong>Mã:</strong> <span id="info-ma"></span></div>
+				<div><strong>Tên:</strong> <span id="info-ten"></span></div>
+			</div>
 		</div>
-		{% else %}
-		<div class="admin-form-group">
-			<label for="ma_khoa">
-				<i class="fa-solid fa-code"></i>
-				<span>Mã Khoa/Viện</span>
-			</label>
-			<input id="ma_khoa" type="text" name="ma_khoa" value="{{ faculty.ma_khoa }}" placeholder="VD: CNTT, QTKD" required />
-			<small>Ký hiệu ngắn gọn để nhận diện khoa/viện</small>
-		</div>
-
-		<div class="admin-form-group">
-			<label for="ten_khoa">
-				<i class="fa-solid fa-heading"></i>
-				<span>Tên Khoa/Viện</span>
-			</label>
-			<input id="ten_khoa" type="text" name="ten_khoa" value="{{ faculty.ten_khoa }}" placeholder="VD: Viện Công nghệ thông tin" required />
-			<small>Tên đầy đủ của khoa/viện</small>
-		</div>
-		{% endif %}
 
 		<div class="admin-form-actions">
 			<button type="submit" class="btn-submit">
-				<i class="fa-solid fa-save"></i>{% if faculty %}Cập nhật{% else %}Thêm Khoa/Viện{% endif %}
+				<i class="fa-solid fa-save"></i>Thêm Ngành
 			</button>
-			<a href="{{ url_for('course.admin_school_detail', id=school.id) }}" class="btn-cancel">
+			<a href="/admin/faculties/{{ faculty.id }}" class="btn-cancel">
 				<i class="fa-solid fa-times"></i>Hủy
 			</a>
 		</div>
@@ -184,29 +172,25 @@
 {% block extra_js %}
 <script>
 	$(document).ready(function() {
-		$('#faculty_id').select2({
-			placeholder: '-- Chọn Khoa/Viện --',
+		$('#major_id').select2({
+			placeholder: '-- Chọn Ngành --',
 			allowClear: true,
 			language: 'vi',
 			width: '100%',
 			minimumInputLength: 0,
-			dropdownParent: $('#faculty_id').parent(),
+			dropdownParent: $('#major_id').parent(),
 			matcher: function (params, data) {
-				// Nếu không có từ tìm kiếm, hiển thị tất cả
 				if (!params.term || params.term.trim() === '') {
 					return data;
 				}
 
-				// Không hiển thị item nếu không có text
 				if (typeof data.text === 'undefined') {
 					return null;
 				}
 
-				// Tìm kiếm case-insensitive
 				var searchTerm = params.term.toUpperCase();
 				var text = data.text.toUpperCase();
 
-				// Tìm theo mã hoặc tên
 				if (text.indexOf(searchTerm) > -1) {
 					return $.extend({}, data, true);
 				}
@@ -215,24 +199,38 @@
 			}
 		});
 
+		// Hiển thị thông tin ngành khi chọn
+		$('#major_id').on('select2:select', function(e) {
+			var option = e.params.data;
+			if (option.id) {
+				var text = option.text;
+				var parts = text.split(' - ');
+				$('#info-ma').text(parts[0] || '');
+				$('#info-ten').text(parts[1] || '');
+				$('#major-info').slideDown();
+			}
+		});
+
+		// Ẩn thông tin khi clear
+		$('#major_id').on('select2:unselecting', function() {
+			$('#major-info').slideUp();
+		});
+
 		// Tự động focus search field khi dropdown mở
-		$('#faculty_id').on('select2:opening', function() {
+		$('#major_id').on('select2:opening', function() {
 			setTimeout(function() {
 				var searchField = $('.select2-search__field');
-				searchField.attr('placeholder', 'Tìm mã hoặc tên...');
+				searchField.attr('placeholder', 'Tìm mã hoặc tên ngành...');
 				searchField.val('');
 				searchField.focus();
 			}, 50);
 		});
 
 		// Xóa search khi đóng dropdown
-		$('#faculty_id').on('select2:closing', function() {
+		$('#major_id').on('select2:closing', function() {
 			$('.select2-search__field').val('');
 		});
 	});
 </script>
 {% endblock %}
-
-
-
 
