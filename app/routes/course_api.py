@@ -1,8 +1,17 @@
-from flask import Blueprint, jsonify, request, render_template, redirect, url_for, session
+import io
+from urllib.parse import quote
+
+from flask import Blueprint, jsonify, request, render_template, redirect, url_for, session, send_file
 from ..models import (
     db, Truong, KhoaVien, NganhHoc, PhienBanCT, HocPhan, KhungChuongTrinh,
     DeCuongChiTiet, ChuanDauRa, KeHoachGiangDay, DanhGiaHocPhan, HocLieu, User
 )
+import os
+import google.generativeai as genai
+from dotenv import load_dotenv
+
+# Load biến môi trường từ file .env
+load_dotenv()
 
 course_bp = Blueprint('course', __name__)
 
@@ -44,6 +53,20 @@ def logout():
 
 
 # ==============================================================
+# CONTEXT PROCESSORS
+# ==============================================================
+
+@course_bp.app_context_processor
+def inject_navbar_data():
+    """Cung cấp dữ liệu cho navbar trên tất cả các trang"""
+    return dict(
+        nav_schools=Truong.query.order_by(Truong.ten_truong.asc()).all(),
+        nav_faculties=KhoaVien.query.order_by(KhoaVien.ten_khoa.asc()).all(),
+        nav_majors=NganhHoc.query.order_by(NganhHoc.ten_nganh.asc()).all()
+    )
+
+
+# ==============================================================
 # MAIN ROUTES
 # ==============================================================
 
@@ -57,6 +80,29 @@ def get_pagination_params():
     search_query = request.args.get('q', '')
     cohort = request.args.get('cohort', '')
     return page, limit, search_query, cohort
+
+
+def _major_versions(major_id):
+    return PhienBanCT.query.filter_by(nganh_id=major_id).order_by(PhienBanCT.nam_bat_dau.desc(), PhienBanCT.id.desc()).all()
+
+
+def _pick_version(major_id, version_code=None):
+    versions = _major_versions(major_id)
+    if not versions:
+        return None, []
+
+    selected = None
+    if version_code:
+        selected = next((v for v in versions if v.ma_phien_ban == version_code), None)
+
+    if not selected:
+        selected = versions[0]
+
+    return selected, versions
+
+
+def _curriculum_items(version_id):
+    return KhungChuongTrinh.query.filter_by(phien_ban_id=version_id).order_by(KhungChuongTrinh.hoc_ky_du_kien.asc()).all()
 
 # API: Schools
 @course_bp.route('/api/schools', methods=['GET'])
@@ -179,6 +225,158 @@ def get_versions():
     return jsonify({"status": "success", "data": data})
 
 
+@course_bp.route('/api/major/<int:id>/versions', methods=['GET'])
+def get_major_versions(id):
+    major = NganhHoc.query.get_or_404(id)
+    versions = _major_versions(major.id)
+    return jsonify({
+        "status": "success",
+        "major_id": major.id,
+        "data": [{"ma": v.ma_phien_ban, "nam": v.nam_bat_dau} for v in versions]
+    })
+
+
+@course_bp.route('/api/major/<int:id>/compare', methods=['GET'])
+def compare_major_versions_api(id):
+    default_major = NganhHoc.query.get_or_404(id)
+    left_major_id = request.args.get('major_left_id', id, type=int)
+    right_major_id = request.args.get('major_right_id', type=int)
+    left_code = request.args.get('left', '')
+    right_code = request.args.get('right', '')
+
+    left_major = NganhHoc.query.get_or_404(left_major_id)
+    right_major = NganhHoc.query.get(right_major_id) if right_major_id else None
+    if not right_major:
+        right_major = default_major if default_major.id != left_major.id else left_major
+
+    left_version, _ = _pick_version(left_major.id, left_code)
+    right_version, _ = _pick_version(right_major.id, right_code)
+
+    if not left_version:
+        return jsonify({"status": "error", "message": "Chương trình bên trái chưa có phiên bản"}), 404
+
+    if not right_version:
+        return jsonify({"status": "error", "message": "Chương trình bên phải chưa có phiên bản"}), 404
+
+    left_items = _curriculum_items(left_version.id)
+    right_items = _curriculum_items(right_version.id)
+
+    left_map = {item.hoc_phan.ma_hoc_phan: item.hoc_phan for item in left_items}
+    right_map = {item.hoc_phan.ma_hoc_phan: item.hoc_phan for item in right_items}
+
+    common_codes = sorted(set(left_map.keys()) & set(right_map.keys()))
+    left_only_codes = sorted(set(left_map.keys()) - set(right_map.keys()))
+    right_only_codes = sorted(set(right_map.keys()) - set(left_map.keys()))
+
+    return jsonify({
+        "status": "success",
+        "left_major": {"id": left_major.id, "ma": left_major.ma_nganh, "ten": left_major.ten_nganh},
+        "right_major": {"id": right_major.id, "ma": right_major.ma_nganh, "ten": right_major.ten_nganh},
+        "left_version": {"ma": left_version.ma_phien_ban, "nam": left_version.nam_bat_dau},
+        "right_version": {"ma": right_version.ma_phien_ban, "nam": right_version.nam_bat_dau},
+        "common": [{"ma": code, "ten": left_map[code].ten_hoc_phan, "tin_chi": left_map[code].so_tin_chi} for code in common_codes],
+        "left_only": [{"ma": code, "ten": left_map[code].ten_hoc_phan, "tin_chi": left_map[code].so_tin_chi} for code in left_only_codes],
+        "right_only": [{"ma": code, "ten": right_map[code].ten_hoc_phan, "tin_chi": right_map[code].so_tin_chi} for code in right_only_codes]
+    })
+
+
+@course_bp.route('/api/major/<int:id>/share-info', methods=['GET'])
+def major_share_info(id):
+    major = NganhHoc.query.get_or_404(id)
+    version_code = request.args.get('version', '')
+    version, _ = _pick_version(major.id, version_code)
+
+    if not version:
+        return jsonify({"status": "error", "message": "Ngành chưa có phiên bản chương trình"}), 404
+
+    share_url = url_for('course.major_detail', id=major.id, version=version.ma_phien_ban, _external=True)
+    qr_url = f"https://api.qrserver.com/v1/create-qr-code/?size=260x260&data={quote(share_url)}"
+
+    return jsonify({
+        "status": "success",
+        "share_url": share_url,
+        "qr_url": qr_url,
+        "version": {"ma": version.ma_phien_ban, "nam": version.nam_bat_dau}
+    })
+
+
+@course_bp.route('/api/favorites/majors', methods=['GET'])
+def get_favorite_majors():
+    favorites = session.get('favorite_majors', [])
+    return jsonify({"status": "success", "data": favorites})
+
+
+@course_bp.route('/api/favorites/majors', methods=['POST'])
+def add_favorite_major():
+    payload = request.get_json(silent=True) or {}
+    major_id = payload.get('major_id')
+    version_code = payload.get('version')
+
+    if not major_id or not version_code:
+        return jsonify({"status": "error", "message": "Thiếu major_id hoặc version"}), 400
+
+    major = NganhHoc.query.get_or_404(major_id)
+    version = PhienBanCT.query.filter_by(nganh_id=major.id, ma_phien_ban=version_code).first()
+    if not version:
+        return jsonify({"status": "error", "message": "Phiên bản không hợp lệ"}), 400
+
+    favorites = session.get('favorite_majors', [])
+    already_exists = next((x for x in favorites if x.get('major_id') == major.id and x.get('version') == version_code), None)
+
+    if not already_exists:
+        favorites.append({
+            "major_id": major.id,
+            "major_name": major.ten_nganh,
+            "major_code": major.ma_nganh,
+            "version": version_code
+        })
+        session['favorite_majors'] = favorites
+        session.modified = True
+        added = True
+    else:
+        added = False
+
+    return jsonify({"status": "success", "message": "Đã thêm vào yêu thích", "added": added, "data": favorites})
+
+
+@course_bp.route('/api/favorites/majors/<int:major_id>', methods=['DELETE'])
+def remove_favorite_major(major_id):
+    version_code = request.args.get('version', '')
+    favorites = session.get('favorite_majors', [])
+    next_favorites = [x for x in favorites if not (x.get('major_id') == major_id and x.get('version') == version_code)]
+    session['favorite_majors'] = next_favorites
+    session.modified = True
+
+    return jsonify({"status": "success", "message": "Đã xóa khỏi yêu thích", "data": next_favorites})
+
+
+@course_bp.route('/favorites', methods=['GET'])
+def favorite_list_page():
+    raw_favorites = session.get('favorite_majors', [])
+    favorites = []
+
+    for item in raw_favorites:
+        major_id = item.get('major_id')
+        version_code = item.get('version')
+        major = NganhHoc.query.get(major_id)
+        if not major:
+            continue
+
+        version = PhienBanCT.query.filter_by(nganh_id=major.id, ma_phien_ban=version_code).first()
+        if not version:
+            continue
+
+        favorites.append({
+            "major_id": major.id,
+            "major_name": major.ten_nganh,
+            "major_code": major.ma_nganh,
+            "version": version.ma_phien_ban,
+            "year": version.nam_bat_dau
+        })
+
+    return render_template('favorites.html', favorites=favorites)
+
+
 # ==============================================================
 # 3. ROUTES CHI TIẾT (DRILL-DOWN)
 # ==============================================================
@@ -198,6 +396,192 @@ def faculty_detail(id):
 def major_detail(id):
     # Lấy thông tin ngành
     major = NganhHoc.query.get_or_404(id)
+    version_code = request.args.get('version', '')
+    version, versions = _pick_version(id, version_code)
+
+    if not version:
+        return "Chưa có khung chương trình cho ngành này", 404
+
+    curriculum_list = _curriculum_items(version.id)
+    favorites = session.get('favorite_majors', [])
+    is_favorite = any(x.get('major_id') == major.id and x.get('version') == version.ma_phien_ban for x in favorites)
+
+    total_credits = sum(item.hoc_phan.so_tin_chi for item in curriculum_list)
+
+    return render_template(
+        'major_detail.html',
+        major=major,
+        version=version,
+        versions=versions,
+        curriculum_list=curriculum_list,
+        total_credits=total_credits,
+        is_favorite=is_favorite
+    )
+
+
+@course_bp.route('/major/<int:id>/compare', methods=['GET'])
+def major_compare_page(id):
+    base_major = NganhHoc.query.get_or_404(id)
+    left_major_id = request.args.get('major_left_id', id, type=int)
+    right_major_id = request.args.get('major_right_id', type=int)
+    left_code = request.args.get('left', '')
+    right_code = request.args.get('right', '')
+
+    left_major = NganhHoc.query.get_or_404(left_major_id)
+    right_major = NganhHoc.query.get(right_major_id) if right_major_id else None
+    if not right_major:
+        right_major = next((m for m in NganhHoc.query.order_by(NganhHoc.id.asc()).all() if m.id != left_major.id), left_major)
+
+    left_versions = _major_versions(left_major.id)
+    right_versions = _major_versions(right_major.id)
+
+    if not left_versions:
+        return "Chương trình bên trái chưa có phiên bản để so sánh", 404
+    if not right_versions:
+        return "Chương trình bên phải chưa có phiên bản để so sánh", 404
+
+    left_version = next((v for v in left_versions if v.ma_phien_ban == left_code), left_versions[0])
+    right_version = next((v for v in right_versions if v.ma_phien_ban == right_code), right_versions[0])
+
+    left_items = _curriculum_items(left_version.id)
+    right_items = _curriculum_items(right_version.id)
+
+    left_map = {item.hoc_phan.ma_hoc_phan: item.hoc_phan for item in left_items}
+    right_map = {item.hoc_phan.ma_hoc_phan: item.hoc_phan for item in right_items}
+
+    common_codes = sorted(set(left_map.keys()) & set(right_map.keys()))
+    left_only_codes = sorted(set(left_map.keys()) - set(right_map.keys()))
+    right_only_codes = sorted(set(right_map.keys()) - set(left_map.keys()))
+
+    return render_template(
+        'major_compare.html',
+        major=base_major,
+        left_major=left_major,
+        right_major=right_major,
+        compare_majors=NganhHoc.query.order_by(NganhHoc.ten_nganh.asc()).all(),
+        left_versions=left_versions,
+        right_versions=right_versions,
+        left_version=left_version,
+        right_version=right_version,
+        common_courses=[left_map[code] for code in common_codes],
+        left_only_courses=[left_map[code] for code in left_only_codes],
+        right_only_courses=[right_map[code] for code in right_only_codes]
+    )
+
+
+@course_bp.route('/major/<int:id>/pdf', methods=['GET'])
+def major_pdf(id):
+    major = NganhHoc.query.get_or_404(id)
+    version_code = request.args.get('version', '')
+    version, _ = _pick_version(major.id, version_code)
+
+    if not version:
+        return "Ngành chưa có phiên bản chương trình", 404
+
+    curriculum_list = _curriculum_items(version.id)
+
+    try:
+        from reportlab.lib import colors
+        from reportlab.lib.pagesizes import A4
+        from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+        from reportlab.lib.units import mm
+        from reportlab.pdfbase import pdfmetrics
+        from reportlab.pdfbase.ttfonts import TTFont
+        from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
+    except Exception:
+        return jsonify({
+            "status": "error",
+            "message": "Thiếu thư viện reportlab. Cài bằng lệnh: pip install reportlab"
+        }), 500
+
+    pdf_buffer = io.BytesIO()
+    doc = SimpleDocTemplate(
+        pdf_buffer,
+        pagesize=A4,
+        leftMargin=12 * mm,
+        rightMargin=12 * mm,
+        topMargin=12 * mm,
+        bottomMargin=12 * mm
+    )
+
+    try:
+        font_candidates = [
+            'DejaVuSans.ttf',
+            'C:/Windows/Fonts/arial.ttf',
+            'C:/Windows/Fonts/tahoma.ttf'
+        ]
+        font_path = next((path for path in font_candidates if os.path.exists(path)), None)
+        if font_path:
+            pdfmetrics.registerFont(TTFont('AppFont', font_path))
+            font_name = 'AppFont'
+        else:
+            font_name = 'Helvetica'
+    except Exception:
+        font_name = 'Helvetica'
+
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle('TitleStyle', parent=styles['Heading1'], fontName=font_name, fontSize=14, leading=18)
+    text_style = ParagraphStyle('TextStyle', parent=styles['Normal'], fontName=font_name, fontSize=10, leading=13)
+    table_text_style = ParagraphStyle('TableTextStyle', parent=styles['Normal'], fontName=font_name, fontSize=9, leading=11)
+
+    table_data = [[
+        'STT',
+        'Ma HP',
+        'Ten hoc phan',
+        'Tin chi',
+        'Ky',
+        'Loai',
+        'Khoa/Vien'
+    ]]
+
+    total_credits = 0
+    for idx, item in enumerate(curriculum_list, start=1):
+        total_credits += item.hoc_phan.so_tin_chi
+        table_data.append([
+            str(idx),
+            item.hoc_phan.ma_hoc_phan,
+            Paragraph(item.hoc_phan.ten_hoc_phan, table_text_style),
+            str(item.hoc_phan.so_tin_chi),
+            str(item.hoc_ky_du_kien or ''),
+            item.loai_mon or '',
+            Paragraph(item.hoc_phan.khoa_quan_ly.ten_khoa if item.hoc_phan.khoa_quan_ly else '', table_text_style)
+        ])
+
+    table = Table(
+        table_data,
+        colWidths=[10 * mm, 20 * mm, 56 * mm, 12 * mm, 10 * mm, 28 * mm, 36 * mm],
+        repeatRows=1
+    )
+
+    table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#085CA7')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+        ('FONTNAME', (0, 0), (-1, -1), font_name),
+        ('FONTSIZE', (0, 0), (-1, 0), 9),
+        ('FONTSIZE', (0, 1), (-1, -1), 8.5),
+        ('ALIGN', (0, 0), (1, -1), 'CENTER'),
+        ('ALIGN', (3, 1), (4, -1), 'CENTER'),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('GRID', (0, 0), (-1, -1), 0.4, colors.grey),
+        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.whitesmoke, colors.HexColor('#F9FCFF')])
+    ]))
+
+    story = [
+        Paragraph(f'Chuong trinh dao tao: {major.ten_nganh}', title_style),
+        Spacer(1, 6),
+        Paragraph(f'Ma nganh: {major.ma_nganh}', text_style),
+        Paragraph(f'Phien ban: {version.ma_phien_ban} - Nam bat dau: {version.nam_bat_dau}', text_style),
+        Paragraph(f'Tong so tin chi: {total_credits}', text_style),
+        Spacer(1, 10),
+        table
+    ]
+
+    doc.build(story)
+    pdf_buffer.seek(0)
+
+    filename = f"CTDT_{major.ma_nganh}_{version.ma_phien_ban}.pdf"
+    return send_file(pdf_buffer, as_attachment=True, download_name=filename, mimetype='application/pdf')
+
 
     # Lấy phiên bản chương trình đào tạo
     version = PhienBanCT.query.filter_by(nganh_id=id).first()
@@ -229,6 +613,137 @@ def course_detail(id):
     return render_template('syllabus.html', course=course, syllabus=syllabus)
 
 
+@course_bp.route('/api/chat', methods=['POST'])
+def chat_api():
+    data = request.get_json()
+    user_message = data.get('message', '').strip()
+
+    if not user_message:
+        return jsonify({"reply": "Bạn hãy nhập câu hỏi nhé!"})
+
+    try:
+        api_key = os.environ.get("GEMINI_API_KEY")
+        if not api_key:
+            return jsonify({"reply": "Lỗi hệ thống: Chưa cấu hình API."})
+
+        genai.configure(api_key=api_key)
+        # Vẫn dùng bản Flash Lite cho nhẹ và an toàn với tài khoản Free
+        model = genai.GenerativeModel('gemini-flash-lite-latest')
+
+        # 1. Lấy dữ liệu tổng quan chung (Bảng Truong, KhoaVien, NganhHoc)
+        so_truong = Truong.query.count()
+        so_khoa = KhoaVien.query.count()
+        so_nganh = NganhHoc.query.count()
+
+        # =================================================================
+        # 2. SMART ROUTER: RÚT TRÍCH DỮ LIỆU TỪ 11 BẢNG DỰA THEO CÂU HỎI
+        # =================================================================
+        thong_tin_db = ""
+        user_msg_lower = user_message.lower()
+
+        # TRƯỜNG HỢP A: User hỏi về NGÀNH HỌC (Liên kết bảng NganhHoc, PhienBanCT, KhungChuongTrinh)
+        for nganh in NganhHoc.query.all():
+            if nganh.ten_nganh.lower() in user_msg_lower:
+                thong_tin_db += f"\n[THÔNG TIN NGÀNH HỌC]\n- Tên ngành: {nganh.ten_nganh} (Mã: {nganh.ma_nganh}, Thuộc {nganh.khoa.ten_khoa})\n"
+                # Tìm Khung chương trình của ngành này
+                phien_ban = PhienBanCT.query.filter_by(nganh_id=nganh.id).first()
+                if phien_ban:
+                    so_mon_hoc = KhungChuongTrinh.query.filter_by(phien_ban_id=phien_ban.id).count()
+                    thong_tin_db += f"- Phiên bản đào tạo: {phien_ban.ma_phien_ban} ({phien_ban.nam_bat_dau})\n"
+                    thong_tin_db += f"- Tổng số môn phải học: {so_mon_hoc} môn.\n"
+                break  # Tìm thấy 1 ngành khớp là dừng
+
+        # TRƯỜNG HỢP B: User hỏi về MÔN HỌC (Liên kết bảng HocPhan, DeCuong, DanhGia, HocLieu, ChuanDauRa)
+        for mon in HocPhan.query.all():
+            if mon.ten_hoc_phan.lower() in user_msg_lower or mon.ma_hoc_phan.lower() in user_msg_lower:
+                thong_tin_db += f"\n[THÔNG TIN MÔN HỌC]\n- Môn: {mon.ten_hoc_phan} (Mã: {mon.ma_hoc_phan})\n"
+                thong_tin_db += f"- Số tín chỉ: {mon.so_tin_chi}\n"
+
+                # Tìm Đề cương chi tiết
+                de_cuong = DeCuongChiTiet.query.filter_by(hoc_phan_id=mon.id).first()
+                if de_cuong:
+                    # Rút bảng Đánh giá
+                    danh_gia = DanhGiaHocPhan.query.filter_by(de_cuong_id=de_cuong.id).all()
+                    if danh_gia:
+                        thong_tin_db += "- Điểm đánh giá: " + ", ".join(
+                            [f"{dg.thanh_phan} ({int(dg.trong_so * 100)}%)" for dg in danh_gia]) + "\n"
+
+                    # Rút bảng Học liệu
+                    hoc_lieu = HocLieu.query.filter_by(de_cuong_id=de_cuong.id).all()
+                    if hoc_lieu:
+                        thong_tin_db += "- Giáo trình/Tài liệu: " + ", ".join(
+                            [hl.ten_tai_lieu for hl in hoc_lieu]) + "\n"
+
+                    # Rút bảng Chuẩn đầu ra (CLO)
+                    clo = ChuanDauRa.query.filter_by(de_cuong_id=de_cuong.id).all()
+                    if clo:
+                        thong_tin_db += "- Mục tiêu môn học: " + " và ".join([c.mo_ta for c in clo]) + "\n"
+                break  # Tìm thấy 1 môn khớp là dừng
+        dinh_huong = {
+            "web": ["lập trình", "web", "phần mềm", "cơ sở dữ liệu", "hệ thống thông tin"],
+            "cloud": ["mạng", "bảo mật", "hệ điều hành", "đám mây", "an toàn", "nhúng"],
+            "data": ["dữ liệu", "thống kê", "ai", "trí tuệ nhân tạo", "machine", "toán"],
+            "marketing": ["marketing", "thương hiệu", "hành vi", "khách hàng", "pr", "thị trường"]
+        }
+
+        is_career_question = False
+        for nghe, tu_khoa_list in dinh_huong.items():
+            if nghe in user_msg_lower or "lộ trình" in user_msg_lower or "định hướng" in user_msg_lower:
+                is_career_question = True
+                thong_tin_db += f"\n[CÁC MÔN HỌC TRONG TRƯỜNG PHÙ HỢP VỚI NGHỀ NÀY]\n"
+
+                # Quét tất cả môn học, môn nào có tên chứa từ khóa thì gom lại
+                mon_goi_y = []
+                for mon in HocPhan.query.all():
+                    if any(tk in mon.ten_hoc_phan.lower() for tk in tu_khoa_list):
+                        mon_goi_y.append(f"- {mon.ten_hoc_phan} ({mon.so_tin_chi} TC)")
+
+                # Lấy tối đa 10 môn để AI không bị ngợp
+                thong_tin_db += "\n".join(mon_goi_y[:10]) + "\n"
+                break
+
+        for truong in Truong.query.all():
+            if truong.ten_truong.lower() in user_msg_lower and truong.ma_truong != "NEU_BASE":
+                so_khoa_truong_nay = len(truong.khoas)
+                thong_tin_db += f"\n[THÔNG TIN CHI TIẾT TRƯỜNG: {truong.ten_truong}]\n"
+                thong_tin_db += f"- Số lượng Khoa/Viện trực thuộc: {so_khoa_truong_nay}\n"
+
+                # Liệt kê luôn tên các khoa cho AI biết đường mà kể
+                ten_cac_khoa = [k.ten_khoa for k in truong.khoas]
+                thong_tin_db += f"- Danh sách gồm: {', '.join(ten_cac_khoa)}\n"
+                break
+
+        # =================================================================
+        # 3. TIÊM TOÀN BỘ VÀO PROMPT CHO AI XỬ LÝ
+        # =================================================================
+        prompt = f"""
+        Bạn là "NEU Assistant", trợ lý ảo tư vấn học tập của hệ thống NEU Course.
+
+        [DỮ LIỆU TỔNG QUAN]
+        - Trường có {so_truong} khối/trường, {so_khoa} khoa/viện, {so_nganh} ngành đào tạo.
+
+        [DỮ LIỆU CHI TIẾT TRÍCH XUẤT TỪ DATABASE CHÍNH XÁC 100%]
+        Hãy dùng Dữ liệu dưới đây để trả lời. Nếu trống, nghĩa là hệ thống chưa có thông tin chi tiết.
+        {thong_tin_db}
+
+        [QUY TẮC CỐT LÕI]
+        1. Xưng "mình", gọi "bạn". Trả lời thân thiện, năng động.
+        2. NẾU USER HỎI VỀ ĐỊNH HƯỚNG/LỘ TRÌNH (như Web, Cloud, Data...):
+           - Hãy sử dụng CÁC MÔN HỌC TRONG TRƯỜNG ở mục Dữ liệu chi tiết để vẽ ra lộ trình.
+           - Sắp xếp logic theo: Cơ bản -> Chuyên sâu -> Kỹ năng bổ trợ.
+           - KHÔNG tự bịa ra môn học mà trường không dạy. Trình bày dạng danh sách (bullet points) cho dễ nhìn.
+        3. Nếu user hỏi thông tin tra cứu thông thường, trả lời cực kỳ ngắn gọn (2-3 câu).
+        Câu hỏi của sinh viên: {user_message}
+        """
+
+        response = model.generate_content(prompt)
+        reply = response.text.replace('**', '<b>').replace('*', '<br>-')
+
+    except Exception as e:
+        print(f"Lỗi AI: {e}")
+        reply = "Hệ thống AI đang bảo trì. Bạn đợi chút rồi hỏi lại nhé!"
+
+    return jsonify({"reply": reply})
 # ==============================================================
 # ADMIN ROUTES
 # ==============================================================
@@ -348,28 +863,28 @@ def admin_major_detail(major_id):
         return redirect(url_for('course.login'))
 
     major = NganhHoc.query.get_or_404(major_id)
-    
+
     # Handle POST request (form submission)
     if request.method == 'POST':
         major.ma_nganh = request.form.get('ma_nganh', major.ma_nganh).strip()
         major.ten_nganh = request.form.get('ten_nganh', major.ten_nganh).strip()
         khoa_id = request.form.get('khoa_id')
-        
+
         if not major.ma_nganh or not major.ten_nganh or not khoa_id:
-            return render_template('admin_major_detail.html', major=major, 
+            return render_template('admin_major_detail.html', major=major,
                                  error='Vui lòng nhập đầy đủ thông tin')
-        
+
         try:
             major.khoa_id = int(khoa_id)
             db.session.commit()
         except Exception:
             db.session.rollback()
-            return render_template('admin_major_detail.html', major=major, 
+            return render_template('admin_major_detail.html', major=major,
                                  error='Lỗi khi cập nhật ngành')
 
     # Get version - either from query param or first available
     version_id = request.args.get('version_id', type=int)
-    
+
     if version_id:
         version = PhienBanCT.query.filter_by(id=version_id, nganh_id=major_id).first()
     else:
@@ -377,14 +892,14 @@ def admin_major_detail(major_id):
 
     curriculum_list = []
     total_credits = 0
-    
+
     if version:
         curriculum_list = KhungChuongTrinh.query.filter_by(phien_ban_id=version.id) \
             .order_by(KhungChuongTrinh.hoc_ky_du_kien.asc()) \
             .all()
         total_credits = sum(item.hoc_phan.so_tin_chi for item in curriculum_list)
 
-    return render_template('admin_major_detail.html', major=major, version=version, 
+    return render_template('admin_major_detail.html', major=major, version=version,
                          curriculum_list=curriculum_list, total_credits=total_credits)
 
 
@@ -554,15 +1069,15 @@ def admin_school_create_page():
 def admin_faculty_create_form():
     if not check_admin():
         return redirect(url_for('course.login'))
-    
+
     if request.method == 'POST':
         ma = request.form.get('ma_khoa')
         ten = request.form.get('ten_khoa')
         truong_id = request.form.get('truong_id')
-        
+
         if not ma or not ten or not truong_id:
             return render_template('admin_faculty_create_form.html', error='Vui lòng nhập đầy đủ thông tin')
-        
+
         try:
             faculty = KhoaVien(truong_id=int(truong_id), ma_khoa=ma, ten_khoa=ten)
             db.session.add(faculty)
@@ -570,7 +1085,7 @@ def admin_faculty_create_form():
             return redirect(url_for('course.admin_faculties'))
         except:
             return render_template('admin_faculty_create_form.html', error='Lỗi khi tạo Khoa/Viện')
-    
+
     schools = Truong.query.all()
     return render_template('admin_faculty_create_form.html', schools=schools)
 
@@ -607,7 +1122,7 @@ def admin_get_versions(major_id):
         "ma_phien_ban": v.ma_phien_ban,
         "nam_bat_dau": v.nam_bat_dau
     } for v in versions]
-    
+
     return jsonify({"status": "success", "data": data})
 
 
@@ -615,25 +1130,25 @@ def admin_get_versions(major_id):
 def admin_create_version():
     if not check_admin():
         return jsonify({"error": "Unauthorized"}), 401
-    
+
     try:
         data = request.get_json()
         nganh_id = data.get('nganh_id')
         ma_phien_ban = data.get('ma_phien_ban', '').strip()
         nam_bat_dau = data.get('nam_bat_dau')
-        
+
         if not ma_phien_ban or not nam_bat_dau:
             return jsonify({"error": "Thiếu mã phiên bản hoặc năm"}), 400
-        
+
         # Check if version already exists
         existing = PhienBanCT.query.filter_by(
             nganh_id=int(nganh_id),
             ma_phien_ban=ma_phien_ban
         ).first()
-        
+
         if existing:
             return jsonify({"error": "Phiên bản này đã tồn tại"}), 400
-        
+
         version = PhienBanCT(
             nganh_id=int(nganh_id),
             ma_phien_ban=ma_phien_ban,
@@ -657,20 +1172,20 @@ def admin_create_version():
 def admin_get_available_courses():
     if not check_admin():
         return jsonify({"error": "Unauthorized"}), 401
-    
+
     major_id = request.args.get('major_id', type=int)
     version_id = request.args.get('version_id', type=int)
-    
+
     # Lấy danh sách học phần chưa được thêm vào phiên bản này
     existing = db.session.query(KhungChuongTrinh.hoc_phan_id).filter_by(phien_ban_id=version_id).all()
     existing_ids = [e[0] for e in existing]
-    
+
     # Lấy tất cả học phần trừ những cái đã có
     if existing_ids:
         courses = HocPhan.query.filter(HocPhan.id.notin_(existing_ids)).all()
     else:
         courses = HocPhan.query.all()
-    
+
     data = [{
         "id": c.id,
         "ma": c.ma_hoc_phan,
@@ -678,7 +1193,7 @@ def admin_get_available_courses():
         "tin_chi": c.so_tin_chi,
         "khoa": c.khoa_quan_ly.ten_khoa if c.khoa_quan_ly else ""
     } for c in courses]
-    
+
     return jsonify({"status": "success", "data": data})
 
 
@@ -686,26 +1201,26 @@ def admin_get_available_courses():
 def admin_add_curriculum():
     if not check_admin():
         return jsonify({"error": "Unauthorized"}), 401
-    
+
     try:
         data = request.get_json()
         phien_ban_id = data.get('phien_ban_id')
         hoc_phan_id = data.get('hoc_phan_id')
         hoc_ky = data.get('hoc_ky', 1)
         loai_mon = data.get('loai_mon', 'Bắt buộc')
-        
+
         if not phien_ban_id or not hoc_phan_id:
             return jsonify({"error": "Thiếu phiên bản hoặc học phần"}), 400
-        
+
         # Check if already exists
         existing = KhungChuongTrinh.query.filter_by(
             phien_ban_id=int(phien_ban_id),
             hoc_phan_id=int(hoc_phan_id)
         ).first()
-        
+
         if existing:
             return jsonify({"error": "Học phần này đã có trong phiên bản này"}), 400
-        
+
         curriculum = KhungChuongTrinh(
             phien_ban_id=int(phien_ban_id),
             hoc_phan_id=int(hoc_phan_id),
@@ -726,16 +1241,16 @@ def admin_add_curriculum():
 def admin_delete_curriculum(phien_ban_id, hoc_phan_id):
     if not check_admin():
         return jsonify({"error": "Unauthorized"}), 401
-    
+
     try:
         curriculum = KhungChuongTrinh.query.filter_by(
             phien_ban_id=phien_ban_id,
             hoc_phan_id=hoc_phan_id
         ).first()
-        
+
         if not curriculum:
             return jsonify({"error": "Không tìm thấy"}), 404
-            
+
         db.session.delete(curriculum)
         db.session.commit()
         return jsonify({"status": "success"})
