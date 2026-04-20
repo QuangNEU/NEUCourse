@@ -161,8 +161,47 @@
 		</table>
 	</div>
 </div>
+<div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-hidden="true">
+	<div class="modal-dialog modal-dialog-centered">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title" style="color: #DC3545;">
+					<i class="fa-solid fa-triangle-exclamation me-2"></i>Xác nhận xóa
+				</h5>
+				<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+			</div>
+			<div class="modal-body" style="font-size: 1rem;">
+				Bạn có chắc chắn muốn xóa học phần <strong id="deleteCourseName" style="color: var(--neu-blue);"></strong> không?
+				<p class="text-muted mt-2 mb-0" style="font-size: 0.85rem;">
+					Thao tác này sẽ xóa toàn bộ đề cương liên quan và không thể khôi phục.
+				</p>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-secondary" style="border-radius: 8px; padding: 8px 16px;" data-bs-dismiss="modal">Hủy</button>
+				<button type="button" class="btn-delete" id="confirmDeleteBtn" style="height: auto; padding: 8px 16px;">
+					<i class="fa-solid fa-trash me-2"></i>Xóa học phần
+				</button>
+			</div>
+		</div>
+	</div>
+</div>
 
 <script>
+let courseIdToDelete = null;
+let deleteModal = null;
+
+// Khởi tạo Modal khi trang load xong
+document.addEventListener('DOMContentLoaded', function() {
+	deleteModal = new bootstrap.Modal(document.getElementById('deleteConfirmModal'));
+});
+
+// Hàm hiển thị modal thay vì alert
+function showDeleteModal(id, tenHocPhan) {
+	courseIdToDelete = id;
+	document.getElementById('deleteCourseName').textContent = tenHocPhan;
+	deleteModal.show();
+}
+
 function load() {
 	fetch('/api/courses')
 		.then(r => r.json())
@@ -174,13 +213,13 @@ function load() {
 				tbody.innerHTML = data.data.map(c => `
 					<tr>
 						<td><strong>${c.ma}</strong></td>
-						<td><a href="/admin/courses/${c.id}" style="color: var(--neu-blue); text-decoration: none; font-weight: 500;">${c.ten}</a></td>
+						<td><a href="/course/${c.id}" style="color: var(--neu-blue); text-decoration: none; font-weight: 500;">${c.ten}</a></td>
 						<td>${c.tin_chi}</td>
 						<td>${c.khoa}</td>
 						<td>
 							<div class="table-actions">
-								<a href="/admin/courses/${c.id}/edit" class="btn-edit">Sửa</a>
-								<button onclick="if(confirm('Xóa?')) fetch('/api/admin/courses/${c.id}', {method:'DELETE'}).then(()=>load())" class="btn-delete">Xóa</button>
+								<a href="/admin/course/${c.id}/edit" class="btn-edit">Sửa</a>
+								<button onclick="showDeleteModal(${c.id}, '${c.ten.replace(/'/g, "\\'")}')" class="btn-delete">Xóa</button>
 							</div>
 						</td>
 					</tr>
@@ -205,19 +244,46 @@ document.getElementById('searchInput').addEventListener('input', function(e) {
 				tbody.innerHTML = data.data.map(c => `
 					<tr>
 						<td><strong>${c.ma}</strong></td>
-						<td><a href="/admin/courses/${c.id}" style="color: var(--neu-blue); text-decoration: none; font-weight: 500;">${c.ten}</a></td>
+						<td><a href="/course/${c.id}" style="color: var(--neu-blue); text-decoration: none; font-weight: 500;">${c.ten}</a></td>
 						<td>${c.tin_chi}</td>
 						<td>${c.khoa}</td>
 						<td>
 							<div class="table-actions">
-								<a href="/admin/courses/${c.id}/edit" class="btn-edit">Sửa</a>
-								<button onclick="if(confirm('Xóa?')) fetch('/api/admin/courses/${c.id}', {method:'DELETE'}).then(()=>load())" class="btn-delete">Xóa</button>
+								<a href="/admin/course/${c.id}/edit" class="btn-edit">Sửa</a>
+								<button onclick="showDeleteModal(${c.id}, '${c.ten.replace(/'/g, "\\'")}')" class="btn-delete">Xóa</button>
 							</div>
 						</td>
 					</tr>
 				`).join('');
 			}
 		});
+});
+
+// Xử lý sự kiện khi bấm nút xác nhận xóa trong Modal
+document.getElementById('confirmDeleteBtn').addEventListener('click', function() {
+	if (courseIdToDelete) {
+		const btn = this;
+		const originalText = btn.innerHTML;
+		
+		// Hiển thị trạng thái đang xử lý
+		btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>Đang xóa...';
+		btn.disabled = true;
+
+		fetch(`/api/admin/courses/${courseIdToDelete}`, { method: 'DELETE' })
+			.then(() => {
+				deleteModal.hide(); // Ẩn modal
+				load();             // Tải lại bảng dữ liệu
+			})
+			.catch(e => {
+				alert('Lỗi khi xóa: ' + e.message);
+			})
+			.finally(() => {
+				// Khôi phục trạng thái nút bấm
+				btn.innerHTML = originalText;
+				btn.disabled = false;
+				courseIdToDelete = null;
+			});
+	}
 });
 </script>
 {% endblock %}

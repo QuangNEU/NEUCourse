@@ -158,7 +158,10 @@
                             <td class="small">{{ item.hoc_phan.khoa_quan_ly.ten_khoa }}</td>
                             <td class="small text-muted">{{ item.loai_mon }}</td>
                             <td class="text-center">
-                                <button class="btn btn-danger btn-sm" onclick="deleteCurriculum({{ version.id }}, {{ item.hoc_phan_id }})">
+                                <button class="btn btn-danger btn-sm"
+                                        data-phien-ban-id="{{ version.id }}"
+                                        data-hoc-phan-id="{{ item.hoc_phan_id }}"
+                                        onclick="deleteCurriculum(this.dataset.phienBanId, this.dataset.hocPhanId)">
                                     <i class="fa-solid fa-trash"></i>
                                 </button>
                             </td>
@@ -193,7 +196,10 @@
                             <td class="small">{{ item.hoc_phan.khoa_quan_ly.ten_khoa }}</td>
                             <td class="small text-muted">{{ item.loai_mon }}</td>
                             <td class="text-center">
-                                <button class="btn btn-danger btn-sm" onclick="deleteCurriculum({{ version.id }}, {{ item.hoc_phan_id }})">
+                                <button class="btn btn-danger btn-sm"
+                                        data-phien-ban-id="{{ version.id }}"
+                                        data-hoc-phan-id="{{ item.hoc_phan_id }}"
+                                        onclick="deleteCurriculum(this.dataset.phienBanId, this.dataset.hocPhanId)">
                                     <i class="fa-solid fa-trash"></i>
                                 </button>
                             </td>
@@ -230,7 +236,10 @@
                                 <span class="badge bg-warning text-dark">Tự chọn</span>
                             </td>
                             <td class="text-center">
-                                <button class="btn btn-danger btn-sm" onclick="deleteCurriculum({{ version.id }}, {{ item.hoc_phan_id }})">
+                                <button class="btn btn-danger btn-sm"
+                                        data-phien-ban-id="{{ version.id }}"
+                                        data-hoc-phan-id="{{ item.hoc_phan_id }}"
+                                        onclick="deleteCurriculum(this.dataset.phienBanId, this.dataset.hocPhanId)">
                                     <i class="fa-solid fa-trash"></i>
                                 </button>
                             </td>

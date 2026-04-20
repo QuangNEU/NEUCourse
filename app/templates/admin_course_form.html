@@ -1,5 +1,99 @@
 {% extends "base.html" %}
-{% block title %}Thêm Học phần - Admin{% endblock %}
+{% block title %}{% if is_edit %}Chỉnh sửa{% else %}Thêm{% endif %} Học phần - Admin{% endblock %}
+{% block extra_css %}
+<style>
+	.section-import-card {
+		background: #fff;
+		border: 1px solid #e8e8e8;
+		border-radius: 10px;
+		padding: 16px;
+		margin-bottom: 18px;
+	}
+
+	.section-grid {
+		display: flex;
+		flex-direction: column;
+		gap: 12px;
+	}
+
+	.section-box {
+		border: 1px solid #dfe6ee;
+		border-radius: 10px;
+		background: #fff;
+		padding: 12px;
+		box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+		width: 100%;
+	}
+
+	.section-box.dragging {
+		opacity: 0.65;
+		border-color: var(--neu-blue);
+	}
+
+	.section-box-header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		margin-bottom: 8px;
+	}
+
+	.drag-handle {
+		cursor: move;
+		color: #6b7280;
+		font-size: 0.9rem;
+	}
+
+	.section-order-pill {
+		background: #eef5fb;
+		color: var(--neu-blue);
+		padding: 2px 8px;
+		border-radius: 999px;
+		font-weight: 600;
+		font-size: 0.8rem;
+	}
+
+	.section-box input {
+		width: 100%;
+		border: 1px solid #d2d9e1;
+		border-radius: 8px;
+		padding: 8px 10px;
+	}
+
+	.section-content-editor {
+		width: 100%;
+		border: 1px solid #d2d9e1;
+		border-radius: 8px;
+		padding: 8px 10px;
+		min-height: 220px;
+		resize: vertical;
+		overflow: auto;
+		background: #fff;
+	}
+
+	.section-content-editor table {
+		width: 100%;
+		border-collapse: collapse;
+		margin-top: 8px;
+		margin-bottom: 8px;
+	}
+
+	.section-content-editor td,
+	.section-content-editor th {
+		border: 1px solid #cfd8e3;
+		padding: 6px;
+		vertical-align: top;
+	}
+
+	.muted-help {
+		color: #6c757d;
+		font-size: 0.86rem;
+	}
+
+	.editor-modal-xl {
+		max-width: 1320px;
+	}
+</style>
+{% endblock %}
 {% block content %}
 <div class="admin-form-header">
 	<div class="container">
@@ -7,7 +101,7 @@
 			<i class="fa-solid fa-chevron-left"></i>Quay lại danh sách
 		</a>
 		<h1>
-			<i class="fa-solid fa-book"></i>Thêm Học phần Mới
+			<i class="fa-solid fa-book"></i>{% if is_edit %}Chỉnh sửa Học phần{% else %}Thêm Học phần Mới{% endif %}
 		</h1>
 	</div>
 </div>
@@ -19,14 +113,14 @@
 	</div>
 	{% endif %}
 
-	<form method="POST">
+	<form method="POST" id="createCourseForm">
 		<div class="admin-form-group">
 			<label>
 				<i class="fa-solid fa-code"></i>
 				<span>Mã Học phần</span>
 			</label>
-			<input type="text" name="ma_hoc_phan" placeholder="VD: IT104" required />
-			<small>Ký hiệu mã số của học phần</small>
+			<input type="text" name="ma_hoc_phan" placeholder="VD: IT104" {% if not is_edit %}required{% else %}disabled{% endif %} value="{% if course %}{{ course.ma_hoc_phan }}{% endif %}" />
+			<small>{% if not is_edit %}Ký hiệu mã số của học phần{% else %}Mã học phần không thể thay đổi{% endif %}</small>
 		</div>
 
 		<div class="admin-form-group">
@@ -34,7 +128,7 @@
 				<i class="fa-solid fa-heading"></i>
 				<span>Tên Học phần</span>
 			</label>
-			<input type="text" name="ten_hoc_phan" placeholder="VD: Hệ quản trị CSDL" required />
+			<input type="text" name="ten_hoc_phan" placeholder="VD: Hệ quản trị CSDL" required value="{% if course %}{{ course.ten_hoc_phan }}{% endif %}" />
 			<small>Tên đầy đủ của học phần</small>
 		</div>
 
@@ -43,7 +137,7 @@
 				<i class="fa-solid fa-star"></i>
 				<span>Số tín chỉ</span>
 			</label>
-			<input type="number" name="so_tin_chi" placeholder="VD: 3" min="1" required />
+			<input type="number" name="so_tin_chi" placeholder="VD: 3" min="1" required value="{% if course %}{{ course.so_tin_chi }}{% endif %}" />
 			<small>Số tín chỉ của học phần</small>
 		</div>
 
@@ -58,9 +152,61 @@
 			<small>Lựa chọn khoa/viện quản lý học phần này</small>
 		</div>
 
+		<div class="admin-form-group">
+			<label>
+				<i class="fa-solid fa-calendar-check"></i>
+				<span>Năm áp dụng đề cương</span>
+			</label>
+			<input type="text" name="nam_ap_dung" value="{% if syllabus %}{{ syllabus.nam_ap_dung }}{% else %}2026-2027{% endif %}" />
+			<small>Ví dụ: 2026-2027</small>
+		</div>
+
+		<div class="admin-form-group">
+			<label>
+				<i class="fa-solid fa-circle-check"></i>
+				<span>Trạng thái đề cương</span>
+			</label>
+			<select name="trang_thai">
+				<option value="Published" {% if syllabus and syllabus.trang_thai == 'Published' %}selected{% endif %}>Published</option>
+				<option value="Draft" {% if syllabus and syllabus.trang_thai == 'Draft' %}selected{% endif %}>Draft</option>
+			</select>
+		</div>
+
+		<div class="section-import-card">
+			<div class="admin-form-group" style="margin-bottom: 10px;">
+				<label>
+					<i class="fa-solid fa-file-word"></i>
+					<span>{% if is_edit %}Cập nhật{% else %}Import{% endif %} Đề cương Word (.docx)</span>
+				</label>
+				<input type="file" id="syllabusDocxInput" accept=".docx" {% if not is_edit %}required{% endif %} />
+				<small class="muted-help">{% if is_edit %}Tải file để cập nhật nội dung 9 đề mục, hoặc bỏ trống để giữ nguyên nội dung hiện tại.{% else %}Tải file mẫu để tự động tách thành 9 đề mục, sau đó bạn có thể chỉnh sửa nội dung từng box.{% endif %}</small>
+			</div>
+
+			<div style="display: flex; gap: 10px; align-items: center; margin-bottom: 8px;">
+				<button type="button" class="btn-submit" id="importDocxBtn">
+					<i class="fa-solid fa-upload"></i>{% if is_edit %}Cập nhật từ Word{% else %}Import từ Word{% endif %}
+				</button>
+				{% if is_edit and sections_data %}
+				<button type="button" class="btn-cancel" id="openEditorBtn">
+					<i class="fa-solid fa-pen-to-square"></i>Mở popup chỉnh sửa
+				</button>
+				{% else %}
+				<button type="button" class="btn-cancel" id="openEditorBtn" style="display: none;">
+					<i class="fa-solid fa-pen-to-square"></i>Mở popup chỉnh sửa
+				</button>
+				{% endif %}
+				<span id="importStatus" class="muted-help"></span>
+			</div>
+
+			<p class="muted-help" style="margin: 0;">{% if is_edit %}Bạn có thể chỉnh sửa các đề mục hiện tại bằng cách bấm nút "Mở popup chỉnh sửa", hoặc tải file Word mới để cập nhật.{% else %}Sau khi import, hệ thống sẽ mở popup gồm 9 đề mục để bạn chỉnh sửa nội dung và kéo thả sắp xếp.{% endif %}</p>
+		</div>
+
+		<input type="hidden" name="syllabus_sections_json" id="syllabusSectionsJson" />
+		<input type="hidden" name="header_content" id="headerContent" value="{{ syllabus.header_content if syllabus and syllabus.header_content else '' }}" />
+
 		<div class="admin-form-actions">
 			<button type="submit" class="btn-submit">
-				<i class="fa-solid fa-save"></i>Thêm Mới
+				<i class="fa-solid fa-save"></i>{% if is_edit %}Cập nhật{% else %}Thêm Mới{% endif %}
 			</button>
 			<a href="{{ url_for('course.admin_courses') }}" class="btn-cancel">
 				<i class="fa-solid fa-times"></i>Hủy
@@ -69,7 +215,161 @@
 	</form>
 </div>
 
+<div class="modal fade" id="syllabusEditorModal" tabindex="-1" aria-hidden="true">
+	<div class="modal-dialog modal-dialog-scrollable editor-modal-xl">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title"><i class="fa-solid fa-layer-group me-2"></i>Chỉnh sửa 9 đề mục đề cương</h5>
+				<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+			</div>
+			<div class="modal-body">
+				<p class="muted-help">Kéo thả các box để đổi thứ tự. Nội dung bảng từ Word vẫn được giữ và có thể sửa trực tiếp trong box.</p>
+				<div class="section-grid" id="syllabusSectionsModalGrid"></div>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn-cancel" data-bs-dismiss="modal">Đóng</button>
+				<button type="button" class="btn-submit" id="saveSectionsBtn"><i class="fa-solid fa-check"></i>Lưu nội dung đề mục</button>
+			</div>
+		</div>
+	</div>
+</div>
+
 <script>
+const defaultSections = [
+	'1. Thông tin chung',
+	'2. Mục tiêu học phần',
+	'3. Chuẩn đầu ra học phần',
+	'4. Nội dung tóm tắt học phần',
+	'5. Nội dung chi tiết',
+	'6. Phương pháp giảng dạy và học tập',
+	'7. Nhiệm vụ của sinh viên',
+	'8. Đánh giá học phần',
+	'9. Tài liệu học tập'
+];
+
+// Initialize from server data
+// Render thẳng thành Object JSON an toàn bằng filter |safe
+const parsedData = {{ sections_data | tojson | safe if sections_data else 'null' }};
+const isEditMode = {% if is_edit %}true{% else %}false{% endif %};
+
+let sectionState = defaultSections.map((title, i) => ({
+	position: i + 1,
+	title,
+	content: ''
+}));
+let hasImportedSyllabus = false;
+let syllabusEditorModal;
+
+// Kiểm tra và gán luôn, KHÔNG dùng JSON.parse() nữa
+if (isEditMode && parsedData) {
+	if (Array.isArray(parsedData) && parsedData.length > 0) {
+		sectionState = parsedData;
+		hasImportedSyllabus = true;
+        
+        // Hiển thị nút "Mở popup chỉnh sửa" nếu đã có data
+        document.getElementById('openEditorBtn').style.display = 'inline-flex';
+	}
+}
+
+function renderSectionBoxes() {
+	const grid = document.getElementById('syllabusSectionsModalGrid');
+	grid.innerHTML = '';
+
+	sectionState.forEach((section, idx) => {
+		const wrapper = document.createElement('div');
+		wrapper.className = 'section-box';
+		wrapper.draggable = true;
+		wrapper.dataset.index = idx;
+
+		wrapper.innerHTML = `
+			<div class="section-box-header">
+				<span class="section-order-pill">Mục ${idx + 1}</span>
+				<span class="drag-handle"><i class="fa-solid fa-grip-vertical"></i> Kéo thả</span>
+			</div>
+			<div style="margin-bottom: 8px;">
+				<input type="text" class="section-title" placeholder="Tiêu đề đề mục" />
+			</div>
+			<div class="section-content-editor" contenteditable="true"></div>
+		`;
+
+		const titleInput = wrapper.querySelector('.section-title');
+		const contentEditor = wrapper.querySelector('.section-content-editor');
+
+		titleInput.value = section.title || '';
+		contentEditor.innerHTML = section.content || '';
+
+		grid.appendChild(wrapper);
+	});
+
+	bindSectionInputs();
+	bindDragAndDrop();
+	serializeSections();
+}
+
+function bindSectionInputs() {
+	document.querySelectorAll('.section-box').forEach((box, idx) => {
+		const titleInput = box.querySelector('.section-title');
+		const contentEditor = box.querySelector('.section-content-editor');
+
+		titleInput.addEventListener('input', (e) => {
+			sectionState[idx].title = e.target.value;
+			serializeSections();
+		});
+
+		contentEditor.addEventListener('input', () => {
+			sectionState[idx].content = contentEditor.innerHTML;
+			serializeSections();
+		});
+	});
+}
+
+function bindDragAndDrop() {
+	let dragIndex = null;
+
+	document.querySelectorAll('.section-box').forEach((box) => {
+		box.addEventListener('dragstart', () => {
+			dragIndex = Number(box.dataset.index);
+			box.classList.add('dragging');
+		});
+
+		box.addEventListener('dragend', () => {
+			box.classList.remove('dragging');
+			dragIndex = null;
+		});
+
+		box.addEventListener('dragover', (e) => e.preventDefault());
+
+		box.addEventListener('drop', (e) => {
+			e.preventDefault();
+			const dropIndex = Number(box.dataset.index);
+			if (dragIndex === null || dragIndex === dropIndex) return;
+
+			const moved = sectionState.splice(dragIndex, 1)[0];
+			sectionState.splice(dropIndex, 0, moved);
+			sectionState = sectionState.map((item, i) => ({ ...item, position: i + 1 }));
+			renderSectionBoxes();
+		});
+	});
+}
+
+function serializeSections() {
+	const payload = sectionState.map((section, idx) => ({
+		position: idx + 1,
+		title: (section.title || '').trim() || `Mục ${idx + 1}`,
+		content: (section.content || '').trim()
+	}));
+	document.getElementById('syllabusSectionsJson').value = JSON.stringify(payload);
+}
+
+function escapeHtml(value) {
+	return String(value || '')
+		.replaceAll('&', '&amp;')
+		.replaceAll('<', '&lt;')
+		.replaceAll('>', '&gt;')
+		.replaceAll('"', '&quot;')
+		.replaceAll("'", '&#039;');
+}
+
 fetch('/api/faculties?limit=1000').then(r => r.json()).then(data => {
 	const select = document.querySelector('select[name="khoa_quan_ly_id"]');
 	data.data.forEach(f => {
@@ -78,6 +378,92 @@ fetch('/api/faculties?limit=1000').then(r => r.json()).then(data => {
 		opt.textContent = f.ten;
 		select.appendChild(opt);
 	});
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+	syllabusEditorModal = new bootstrap.Modal(document.getElementById('syllabusEditorModal'));
+});
+
+document.getElementById('importDocxBtn').addEventListener('click', async function() {
+	const input = document.getElementById('syllabusDocxInput');
+	const status = document.getElementById('importStatus');
+	const file = input.files && input.files[0];
+
+	if (!file) {
+		if (!isEditMode) {
+			status.textContent = 'Vui lòng chọn file .docx trước khi import.';
+		}
+		return;
+	}
+
+	status.textContent = 'Đang đọc file Word...';
+	const formData = new FormData();
+	formData.append('file', file);
+
+	try {
+		const response = await fetch('/api/admin/syllabus/parse-docx', {
+			method: 'POST',
+			body: formData
+		});
+		const result = await response.json();
+
+		if (result.status !== 'success') {
+			status.textContent = result.error || 'Không đọc được file đề cương.';
+			return;
+		}
+
+		// Store header content
+		const headerContent = result.data.header || '';
+		document.getElementById('headerContent').value = headerContent;
+
+		// Process sections
+		const sections = (result.data.sections || []).map((item, idx) => ({
+			position: idx + 1,
+			title: item.title || defaultSections[idx],
+			content: item.content || ''
+		}));
+
+		sectionState = sections;
+
+		if (sectionState.length < 9) {
+			while (sectionState.length < 9) {
+				const i = sectionState.length;
+				sectionState.push({ position: i + 1, title: defaultSections[i], content: '' });
+			}
+		}
+
+		renderSectionBoxes();
+		hasImportedSyllabus = true;
+		document.getElementById('openEditorBtn').style.display = 'inline-flex';
+		status.textContent = 'Import thành công. Bạn có thể chỉnh sửa nội dung từng đề mục.';
+		syllabusEditorModal.show();
+	} catch (err) {
+		status.textContent = 'Lỗi kết nối khi import file: ' + err.message;
+	}
+});
+
+document.getElementById('openEditorBtn').addEventListener('click', function() {
+	if (!hasImportedSyllabus) {
+		document.getElementById('importStatus').textContent = 'Bạn cần import file Word trước khi chỉnh sửa đề mục.';
+		return;
+	}
+	renderSectionBoxes();
+	syllabusEditorModal.show();
+});
+
+document.getElementById('saveSectionsBtn').addEventListener('click', function() {
+	serializeSections();
+	syllabusEditorModal.hide();
+	document.getElementById('importStatus').textContent = 'Đã lưu nội dung đề mục. Bạn có thể bấm Thêm Mới để tạo học phần.';
+});
+
+document.getElementById('createCourseForm').addEventListener('submit', function(event) {
+	if (!isEditMode && !hasImportedSyllabus) {
+		event.preventDefault();
+		document.getElementById('importStatus').textContent = 'Vui lòng import file Word và lưu đề mục trước khi thêm học phần.';
+		return;
+	}
+	serializeSections();
 });
 </script>
 {% endblock %}

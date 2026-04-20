@@ -1,10 +1,15 @@
 import io
+import html
+import json
+import os
+import re
+from datetime import datetime
 from urllib.parse import quote
 
 from flask import Blueprint, jsonify, request, render_template, redirect, url_for, session, send_file
 from ..models import (
     db, Truong, KhoaVien, NganhHoc, PhienBanCT, HocPhan, KhungChuongTrinh,
-    DeCuongChiTiet, ChuanDauRa, KeHoachGiangDay, DanhGiaHocPhan, HocLieu, User
+    DeCuongChiTiet, ChuanDauRa, KeHoachGiangDay, DanhGiaHocPhan, HocLieu, User, DeMucDeCuong
 )
 import google.generativeai as genai
 from dotenv import load_dotenv
@@ -13,6 +18,118 @@ from dotenv import load_dotenv
 load_dotenv()
 
 course_bp = Blueprint('course', __name__)
+
+DEFAULT_SYLLABUS_SECTIONS = [
+    "1. Thông tin chung",
+    "2. Mục tiêu học phần",
+    "3. Chuẩn đầu ra học phần",
+    "4. Nội dung tóm tắt học phần",
+    "5. Nội dung chi tiết",
+    "6. Phương pháp giảng dạy và học tập",
+    "7. Nhiệm vụ của sinh viên",
+    "8. Đánh giá học phần",
+    "9. Tài liệu học tập"
+]
+
+
+def _normalize_section_payload(items):
+    if not isinstance(items, list):
+        items = []
+
+    normalized = []
+    for idx, default_title in enumerate(DEFAULT_SYLLABUS_SECTIONS, start=1):
+        raw = items[idx - 1] if idx - 1 < len(items) and isinstance(items[idx - 1], dict) else {}
+        title = (raw.get('title') or default_title).strip()
+        content = (raw.get('content') or '').strip()
+        normalized.append({
+            'position': idx,
+            'title': title,
+            'content': content
+        })
+    return normalized
+
+
+def _extract_syllabus_sections_from_docx(file_storage):
+    try:
+        from docx import Document
+        from docx.oxml.table import CT_Tbl
+        from docx.oxml.text.paragraph import CT_P
+        from docx.table import Table
+        from docx.text.paragraph import Paragraph
+    except Exception as exc:
+        raise RuntimeError("Thiếu thư viện python-docx") from exc
+
+    document = Document(file_storage)
+
+    def iter_blocks(doc):
+        for child in doc.element.body.iterchildren():
+            if isinstance(child, CT_P):
+                yield Paragraph(child, doc)
+            elif isinstance(child, CT_Tbl):
+                yield Table(child, doc)
+
+    def table_to_html(tbl):
+        rows_html = []
+        for row in tbl.rows:
+            cell_html = []
+            for cell in row.cells:
+                cell_text = html.escape((cell.text or '').strip())
+                cell_html.append(f"<td>{cell_text}</td>")
+            rows_html.append(f"<tr>{''.join(cell_html)}</tr>")
+        return f"<table class='docx-table table table-bordered table-sm'><tbody>{''.join(rows_html)}</tbody></table>"
+
+    heading_pattern = re.compile(r'^\s*(?:Mục\s*)?(\d{1,2})[\.)\-:]\s*(.+)\s*$')
+    header_lines = []
+    buckets = {}
+    current_idx = 1
+    has_detected_heading = False
+    found_first_section = False
+
+    for block in iter_blocks(document):
+        if isinstance(block, Paragraph):
+            text = (block.text or '').strip()
+            if not text:
+                continue
+
+            match = heading_pattern.match(text)
+            if match:
+                idx = int(match.group(1))
+                if 1 <= idx <= 9:
+                    found_first_section = True
+                    current_idx = idx
+                    has_detected_heading = True
+                    buckets.setdefault(idx, {'title': match.group(2).strip(), 'html_parts': []})
+                    continue
+            
+            # Collect header content before first section heading
+            if not found_first_section:
+                header_lines.append(f"<p>{html.escape(text)}</p>")
+                continue
+
+            bucket = buckets.setdefault(current_idx, {'title': DEFAULT_SYLLABUS_SECTIONS[current_idx - 1], 'html_parts': []})
+            bucket['html_parts'].append(f"<p>{html.escape(text)}</p>")
+        else:
+            if not found_first_section:
+                header_lines.append(table_to_html(block))
+            else:
+                bucket = buckets.setdefault(current_idx, {'title': DEFAULT_SYLLABUS_SECTIONS[current_idx - 1], 'html_parts': []})
+                bucket['html_parts'].append(table_to_html(block))
+
+    sections = []
+    for idx, default_title in enumerate(DEFAULT_SYLLABUS_SECTIONS, start=1):
+        bucket = buckets.get(idx)
+        if bucket:
+            sections.append({
+                'title': (bucket.get('title') or default_title).strip(),
+                'content': ''.join(bucket.get('html_parts') or []).strip()
+            })
+        else:
+            sections.append({'title': default_title, 'content': ''})
+
+    if not buckets and not has_detected_heading:
+        return {'header': ''.join(header_lines).strip(), 'sections': _normalize_section_payload([])}
+
+    return {'header': ''.join(header_lines).strip(), 'sections': _normalize_section_payload(sections)}
 
 # ==============================================================
 # AUTHENTICATION ROUTES
@@ -190,7 +307,7 @@ def get_majors():
 @course_bp.route('/api/courses', methods=['GET'])
 def get_courses():
     page, limit, q, cohort = get_pagination_params()
-    query = HocPhan.query
+    query = HocPhan.query.outerjoin(KhoaVien)
     
     if q:
         query = query.filter(HocPhan.ten_hoc_phan.ilike(f'%{q}%') | HocPhan.ma_hoc_phan.ilike(f'%{q}%'))
@@ -199,14 +316,27 @@ def get_courses():
         # Học phần thuộc khung chương trình của phiên bản đó
         query = query.join(KhungChuongTrinh).join(PhienBanCT).filter(PhienBanCT.ma_phien_ban.ilike(f'%{cohort}%'))
     
+    # Remove distinct and use it only on the ID subquery to avoid SQLAlchemy relationship loading issues
     pagination = query.distinct().paginate(page=page, per_page=limit, error_out=False)
-    data = [{
-        "id": c.id,
-        "ma": c.ma_hoc_phan,
-        "ten": c.ten_hoc_phan,
-        "tin_chi": c.so_tin_chi,
-        "khoa": c.khoa_quan_ly.ten_khoa if c.khoa_quan_ly else ""
-    } for c in pagination.items]
+    data = []
+    for c in pagination.items:
+        khoa_name = ""
+        try:
+            # Explicitly query khoa_vien to avoid relationship loading issues
+            if c.khoa_quan_ly_id:
+                khoa = KhoaVien.query.get(c.khoa_quan_ly_id)
+                if khoa:
+                    khoa_name = khoa.ten_khoa
+        except Exception:
+            khoa_name = ""
+        
+        data.append({
+            "id": c.id,
+            "ma": c.ma_hoc_phan,
+            "ten": c.ten_hoc_phan,
+            "tin_chi": c.so_tin_chi,
+            "khoa": khoa_name
+        })
     
     return jsonify({
         "status": "success",
@@ -1004,6 +1134,23 @@ def admin_delete_school(id):
     return jsonify({"status": "success"})
 
 
+@course_bp.route('/api/admin/courses/<int:id>', methods=['DELETE'])
+def admin_delete_course(id):
+    if not check_admin():
+        return jsonify({"error": "Unauthorized"}), 401
+    
+    course = HocPhan.query.get_or_404(id)
+    # Delete related syllabus entries and their sections
+    syllabi = DeCuongChiTiet.query.filter_by(hoc_phan_id=id).all()
+    for syllabus in syllabi:
+        DeMucDeCuong.query.filter_by(de_cuong_id=syllabus.id).delete(synchronize_session=False)
+        db.session.delete(syllabus)
+    
+    db.session.delete(course)
+    db.session.commit()
+    return jsonify({"status": "success"})
+
+
 @course_bp.route('/admin/faculties', methods=['GET'])
 def admin_faculties():
     if not check_admin():
@@ -1073,11 +1220,157 @@ def admin_major_create_page():
   return redirect(url_for('course.admin_major_create'))
 
 
-@course_bp.route('/admin/course/create', methods=['GET'])
+@course_bp.route('/admin/course/create', methods=['GET', 'POST'])
 def admin_course_create():
     if not check_admin():
         return redirect(url_for('course.login'))
+
+    if request.method == 'POST':
+        ma_hoc_phan = request.form.get('ma_hoc_phan', '').strip()
+        ten_hoc_phan = request.form.get('ten_hoc_phan', '').strip()
+        so_tin_chi = request.form.get('so_tin_chi', type=int)
+        khoa_quan_ly_id = request.form.get('khoa_quan_ly_id', type=int)
+        nam_ap_dung = request.form.get('nam_ap_dung', '').strip() or f"{datetime.now().year}-{datetime.now().year + 1}"
+        trang_thai = request.form.get('trang_thai', 'Published').strip() or 'Published'
+        sections_json = request.form.get('syllabus_sections_json', '').strip()
+        header_content = request.form.get('header_content', '').strip()
+
+        if not ma_hoc_phan or not ten_hoc_phan or not so_tin_chi or not khoa_quan_ly_id:
+            return render_template('admin_course_form.html', error='Vui lòng nhập đầy đủ thông tin')
+
+        sections = _normalize_section_payload([])
+        if sections_json:
+            try:
+                sections = _normalize_section_payload(json.loads(sections_json))
+            except Exception:
+                return render_template('admin_course_form.html', error='Dữ liệu đề cương không hợp lệ')
+
+        try:
+            course = HocPhan(
+                ma_hoc_phan=ma_hoc_phan,
+                ten_hoc_phan=ten_hoc_phan,
+                so_tin_chi=so_tin_chi,
+                khoa_quan_ly_id=khoa_quan_ly_id
+            )
+            db.session.add(course)
+            db.session.flush()
+
+            de_cuong = DeCuongChiTiet(
+                hoc_phan_id=course.id,
+                nam_ap_dung=nam_ap_dung,
+                trang_thai=trang_thai,
+                header_content=header_content
+            )
+            db.session.add(de_cuong)
+            db.session.flush()
+
+            for section in sections:
+                db.session.add(DeMucDeCuong(
+                    de_cuong_id=de_cuong.id,
+                    position=section['position'],
+                    title=section['title'],
+                    content=section['content']
+                ))
+
+            db.session.commit()
+            return redirect(url_for('course.admin_courses'))
+        except Exception:
+            db.session.rollback()
+            return render_template('admin_course_form.html', error='Lỗi khi tạo học phần. Vui lòng kiểm tra mã học phần có bị trùng không')
+
     return render_template('admin_course_form.html')
+
+
+@course_bp.route('/admin/course/<int:id>/edit', methods=['GET', 'POST'])
+def admin_course_edit(id):
+    if not check_admin():
+        return redirect(url_for('course.login'))
+    
+    course = HocPhan.query.get_or_404(id)
+    syllabus = DeCuongChiTiet.query.filter_by(hoc_phan_id=id).order_by(DeCuongChiTiet.nam_ap_dung.desc()).first()
+    
+    if not syllabus:
+        return render_template('admin_course_form.html', error='Đề cương chi tiết không tồn tại')
+    
+    if request.method == 'POST':
+        ten_hoc_phan = request.form.get('ten_hoc_phan', '').strip()
+        so_tin_chi = request.form.get('so_tin_chi', type=int)
+        khoa_quan_ly_id = request.form.get('khoa_quan_ly_id', type=int)
+        nam_ap_dung = request.form.get('nam_ap_dung', '').strip() or syllabus.nam_ap_dung
+        trang_thai = request.form.get('trang_thai', 'Published').strip() or 'Published'
+        sections_json = request.form.get('syllabus_sections_json', '').strip()
+        header_content = request.form.get('header_content', '').strip()
+
+        if not ten_hoc_phan or not so_tin_chi or not khoa_quan_ly_id:
+            return render_template('admin_course_form.html', error='Vui lòng nhập đầy đủ thông tin', is_edit=True, course=course, syllabus=syllabus)
+
+        sections = _normalize_section_payload([])
+        if sections_json:
+            try:
+                sections = _normalize_section_payload(json.loads(sections_json))
+            except Exception:
+                return render_template('admin_course_form.html', error='Dữ liệu đề cương không hợp lệ', is_edit=True, course=course, syllabus=syllabus)
+
+        try:
+            course.ten_hoc_phan = ten_hoc_phan
+            course.so_tin_chi = so_tin_chi
+            course.khoa_quan_ly_id = khoa_quan_ly_id
+            
+            syllabus.nam_ap_dung = nam_ap_dung
+            syllabus.trang_thai = trang_thai
+            syllabus.header_content = header_content
+            
+            # Delete old sections
+            DeMucDeCuong.query.filter_by(de_cuong_id=syllabus.id).delete()
+            
+            # Add new sections
+            for section in sections:
+                db.session.add(DeMucDeCuong(
+                    de_cuong_id=syllabus.id,
+                    position=section['position'],
+                    title=section['title'],
+                    content=section['content']
+                ))
+            
+            db.session.commit()
+            return redirect(url_for('course.admin_courses'))
+        except Exception as e:
+            db.session.rollback()
+            return render_template('admin_course_form.html', error='Lỗi khi cập nhật học phần', is_edit=True, course=course, syllabus=syllabus)
+    
+    # GET request - populate form with existing data
+    sections_data = [
+        {
+            'position': s.position,
+            'title': s.title,
+            'content': s.content
+        }
+        for s in syllabus.de_mucs
+    ]
+    
+    return render_template('admin_course_form.html', is_edit=True, course=course, syllabus=syllabus, sections_data=sections_data)
+
+
+@course_bp.route('/api/admin/syllabus/parse-docx', methods=['POST'])
+def admin_parse_syllabus_docx():
+    if not check_admin():
+        return jsonify({"error": "Unauthorized"}), 401
+
+    uploaded = request.files.get('file')
+    if not uploaded:
+        return jsonify({"error": "Thiếu file upload"}), 400
+
+    filename = (uploaded.filename or '').lower()
+    if not filename.endswith('.docx'):
+        return jsonify({"error": "Chỉ hỗ trợ định dạng .docx"}), 400
+
+    try:
+        sections = _extract_syllabus_sections_from_docx(uploaded)
+        return jsonify({"status": "success", "data": sections})
+    except RuntimeError as exc:
+        return jsonify({"error": str(exc)}), 500
+    except Exception:
+        return jsonify({"error": "Không đọc được file Word. Vui lòng kiểm tra lại mẫu đề cương."}), 400
 
 
 @course_bp.route('/admin/user/create', methods=['GET'])
