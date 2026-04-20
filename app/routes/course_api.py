@@ -1,5 +1,8 @@
 from flask import Blueprint, jsonify, request, render_template, redirect, url_for, session
-from ..models import Truong, KhoaVien, NganhHoc, PhienBanCT, HocPhan, KhungChuongTrinh, DeCuongChiTiet, User
+from ..models import (
+    db, Truong, KhoaVien, NganhHoc, PhienBanCT, HocPhan, KhungChuongTrinh,
+    DeCuongChiTiet, ChuanDauRa, KeHoachGiangDay, DanhGiaHocPhan, HocLieu, User
+)
 
 course_bp = Blueprint('course', __name__)
 
@@ -12,10 +15,10 @@ def login():
     if request.method == 'POST':
         username = request.form.get('username', '').strip()
         password = request.form.get('password', '')
-        
+
         # Tìm user trong database
         user = User.query.filter_by(username=username, password=password).first()
-        
+
         if user:
             # Lưu thông tin vào session
             session['user_id'] = user.id
@@ -25,7 +28,7 @@ def login():
             return redirect(url_for('course.home'))
         else:
             return render_template('login.html', error='Tên đăng nhập hoặc mật khẩu không chính xác!')
-    
+
     return render_template('login.html')
 
 
