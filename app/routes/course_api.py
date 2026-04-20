@@ -7,6 +7,12 @@ from ..models import (
     db, Truong, KhoaVien, NganhHoc, PhienBanCT, HocPhan, KhungChuongTrinh,
     DeCuongChiTiet, ChuanDauRa, KeHoachGiangDay, DanhGiaHocPhan, HocLieu, User
 )
+import os
+import google.generativeai as genai
+from dotenv import load_dotenv
+
+# Load biến môi trường từ file .env
+load_dotenv()
 
 course_bp = Blueprint('course', __name__)
 
@@ -45,6 +51,20 @@ def login():
 def logout():
     session.clear()
     return redirect(url_for('course.home'))
+
+
+# ==============================================================
+# CONTEXT PROCESSORS
+# ==============================================================
+
+@course_bp.app_context_processor
+def inject_navbar_data():
+    """Cung cấp dữ liệu cho navbar trên tất cả các trang"""
+    return dict(
+        nav_schools=Truong.query.order_by(Truong.ten_truong.asc()).all(),
+        nav_faculties=KhoaVien.query.order_by(KhoaVien.ten_khoa.asc()).all(),
+        nav_majors=NganhHoc.query.order_by(NganhHoc.ten_nganh.asc()).all()
+    )
 
 
 # ==============================================================
@@ -563,6 +583,193 @@ def major_pdf(id):
     return send_file(pdf_buffer, as_attachment=True, download_name=filename, mimetype='application/pdf')
 
 
+    # Lấy phiên bản chương trình đào tạo
+    version = PhienBanCT.query.filter_by(nganh_id=id).first()
+
+    if not version:
+        return "Chưa có khung chương trình cho ngành này", 404
+
+    curriculum_list = _curriculum_items(version.id)
+    favorites = session.get('favorite_majors', [])
+    is_favorite = any(x.get('major_id') == major.id and x.get('version') == version.ma_phien_ban for x in favorites)
+
+    total_credits = sum(item.hoc_phan.so_tin_chi for item in curriculum_list)
+
+    return render_template(
+        'major_detail.html',
+        major=major,
+        version=version,
+        versions=versions,
+        curriculum_list=curriculum_list,
+        total_credits=total_credits,
+        is_favorite=is_favorite
+    )
+
+
+@course_bp.route('/major/<int:id>/compare', methods=['GET'])
+def major_compare_page(id):
+    base_major = NganhHoc.query.get_or_404(id)
+    left_major_id = request.args.get('major_left_id', id, type=int)
+    right_major_id = request.args.get('major_right_id', type=int)
+    left_code = request.args.get('left', '')
+    right_code = request.args.get('right', '')
+
+    left_major = NganhHoc.query.get_or_404(left_major_id)
+    right_major = NganhHoc.query.get(right_major_id) if right_major_id else None
+    if not right_major:
+        right_major = next((m for m in NganhHoc.query.order_by(NganhHoc.id.asc()).all() if m.id != left_major.id), left_major)
+
+    left_versions = _major_versions(left_major.id)
+    right_versions = _major_versions(right_major.id)
+
+    if not left_versions:
+        return "Chương trình bên trái chưa có phiên bản để so sánh", 404
+    if not right_versions:
+        return "Chương trình bên phải chưa có phiên bản để so sánh", 404
+
+    left_version = next((v for v in left_versions if v.ma_phien_ban == left_code), left_versions[0])
+    right_version = next((v for v in right_versions if v.ma_phien_ban == right_code), right_versions[0])
+
+    left_items = _curriculum_items(left_version.id)
+    right_items = _curriculum_items(right_version.id)
+
+    left_map = {item.hoc_phan.ma_hoc_phan: item.hoc_phan for item in left_items}
+    right_map = {item.hoc_phan.ma_hoc_phan: item.hoc_phan for item in right_items}
+
+    common_codes = sorted(set(left_map.keys()) & set(right_map.keys()))
+    left_only_codes = sorted(set(left_map.keys()) - set(right_map.keys()))
+    right_only_codes = sorted(set(right_map.keys()) - set(left_map.keys()))
+
+    return render_template(
+        'major_compare.html',
+        major=base_major,
+        left_major=left_major,
+        right_major=right_major,
+        compare_majors=NganhHoc.query.order_by(NganhHoc.ten_nganh.asc()).all(),
+        left_versions=left_versions,
+        right_versions=right_versions,
+        left_version=left_version,
+        right_version=right_version,
+        common_courses=[left_map[code] for code in common_codes],
+        left_only_courses=[left_map[code] for code in left_only_codes],
+        right_only_courses=[right_map[code] for code in right_only_codes]
+    )
+
+
+@course_bp.route('/major/<int:id>/pdf', methods=['GET'])
+def major_pdf(id):
+    major = NganhHoc.query.get_or_404(id)
+    version_code = request.args.get('version', '')
+    version, _ = _pick_version(major.id, version_code)
+
+    if not version:
+        return "Ngành chưa có phiên bản chương trình", 404
+
+    curriculum_list = _curriculum_items(version.id)
+
+    try:
+        from reportlab.lib import colors
+        from reportlab.lib.pagesizes import A4
+        from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+        from reportlab.lib.units import mm
+        from reportlab.pdfbase import pdfmetrics
+        from reportlab.pdfbase.ttfonts import TTFont
+        from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
+    except Exception:
+        return jsonify({
+            "status": "error",
+            "message": "Thiếu thư viện reportlab. Cài bằng lệnh: pip install reportlab"
+        }), 500
+
+    pdf_buffer = io.BytesIO()
+    doc = SimpleDocTemplate(
+        pdf_buffer,
+        pagesize=A4,
+        leftMargin=12 * mm,
+        rightMargin=12 * mm,
+        topMargin=12 * mm,
+        bottomMargin=12 * mm
+    )
+
+    try:
+        font_candidates = [
+            'DejaVuSans.ttf',
+            'C:/Windows/Fonts/arial.ttf',
+            'C:/Windows/Fonts/tahoma.ttf'
+        ]
+        font_path = next((path for path in font_candidates if os.path.exists(path)), None)
+        if font_path:
+            pdfmetrics.registerFont(TTFont('AppFont', font_path))
+            font_name = 'AppFont'
+        else:
+            font_name = 'Helvetica'
+    except Exception:
+        font_name = 'Helvetica'
+
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle('TitleStyle', parent=styles['Heading1'], fontName=font_name, fontSize=14, leading=18)
+    text_style = ParagraphStyle('TextStyle', parent=styles['Normal'], fontName=font_name, fontSize=10, leading=13)
+    table_text_style = ParagraphStyle('TableTextStyle', parent=styles['Normal'], fontName=font_name, fontSize=9, leading=11)
+
+    table_data = [[
+        'STT',
+        'Ma HP',
+        'Ten hoc phan',
+        'Tin chi',
+        'Ky',
+        'Loai',
+        'Khoa/Vien'
+    ]]
+
+    total_credits = 0
+    for idx, item in enumerate(curriculum_list, start=1):
+        total_credits += item.hoc_phan.so_tin_chi
+        table_data.append([
+            str(idx),
+            item.hoc_phan.ma_hoc_phan,
+            Paragraph(item.hoc_phan.ten_hoc_phan, table_text_style),
+            str(item.hoc_phan.so_tin_chi),
+            str(item.hoc_ky_du_kien or ''),
+            item.loai_mon or '',
+            Paragraph(item.hoc_phan.khoa_quan_ly.ten_khoa if item.hoc_phan.khoa_quan_ly else '', table_text_style)
+        ])
+
+    table = Table(
+        table_data,
+        colWidths=[10 * mm, 20 * mm, 56 * mm, 12 * mm, 10 * mm, 28 * mm, 36 * mm],
+        repeatRows=1
+    )
+
+    table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#085CA7')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+        ('FONTNAME', (0, 0), (-1, -1), font_name),
+        ('FONTSIZE', (0, 0), (-1, 0), 9),
+        ('FONTSIZE', (0, 1), (-1, -1), 8.5),
+        ('ALIGN', (0, 0), (1, -1), 'CENTER'),
+        ('ALIGN', (3, 1), (4, -1), 'CENTER'),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('GRID', (0, 0), (-1, -1), 0.4, colors.grey),
+        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.whitesmoke, colors.HexColor('#F9FCFF')])
+    ]))
+
+    story = [
+        Paragraph(f'Chuong trinh dao tao: {major.ten_nganh}', title_style),
+        Spacer(1, 6),
+        Paragraph(f'Ma nganh: {major.ma_nganh}', text_style),
+        Paragraph(f'Phien ban: {version.ma_phien_ban} - Nam bat dau: {version.nam_bat_dau}', text_style),
+        Paragraph(f'Tong so tin chi: {total_credits}', text_style),
+        Spacer(1, 10),
+        table
+    ]
+
+    doc.build(story)
+    pdf_buffer.seek(0)
+
+    filename = f"CTDT_{major.ma_nganh}_{version.ma_phien_ban}.pdf"
+    return send_file(pdf_buffer, as_attachment=True, download_name=filename, mimetype='application/pdf')
+
+
 @course_bp.route('/course/<int:id>')
 def course_detail(id):
     course = HocPhan.query.get_or_404(id)
@@ -571,6 +778,137 @@ def course_detail(id):
     return render_template('syllabus.html', course=course, syllabus=syllabus)
 
 
+@course_bp.route('/api/chat', methods=['POST'])
+def chat_api():
+    data = request.get_json()
+    user_message = data.get('message', '').strip()
+
+    if not user_message:
+        return jsonify({"reply": "Bạn hãy nhập câu hỏi nhé!"})
+
+    try:
+        api_key = os.environ.get("GEMINI_API_KEY")
+        if not api_key:
+            return jsonify({"reply": "Lỗi hệ thống: Chưa cấu hình API."})
+
+        genai.configure(api_key=api_key)
+        # Vẫn dùng bản Flash Lite cho nhẹ và an toàn với tài khoản Free
+        model = genai.GenerativeModel('gemini-flash-lite-latest')
+
+        # 1. Lấy dữ liệu tổng quan chung (Bảng Truong, KhoaVien, NganhHoc)
+        so_truong = Truong.query.count()
+        so_khoa = KhoaVien.query.count()
+        so_nganh = NganhHoc.query.count()
+
+        # =================================================================
+        # 2. SMART ROUTER: RÚT TRÍCH DỮ LIỆU TỪ 11 BẢNG DỰA THEO CÂU HỎI
+        # =================================================================
+        thong_tin_db = ""
+        user_msg_lower = user_message.lower()
+
+        # TRƯỜNG HỢP A: User hỏi về NGÀNH HỌC (Liên kết bảng NganhHoc, PhienBanCT, KhungChuongTrinh)
+        for nganh in NganhHoc.query.all():
+            if nganh.ten_nganh.lower() in user_msg_lower:
+                thong_tin_db += f"\n[THÔNG TIN NGÀNH HỌC]\n- Tên ngành: {nganh.ten_nganh} (Mã: {nganh.ma_nganh}, Thuộc {nganh.khoa.ten_khoa})\n"
+                # Tìm Khung chương trình của ngành này
+                phien_ban = PhienBanCT.query.filter_by(nganh_id=nganh.id).first()
+                if phien_ban:
+                    so_mon_hoc = KhungChuongTrinh.query.filter_by(phien_ban_id=phien_ban.id).count()
+                    thong_tin_db += f"- Phiên bản đào tạo: {phien_ban.ma_phien_ban} ({phien_ban.nam_bat_dau})\n"
+                    thong_tin_db += f"- Tổng số môn phải học: {so_mon_hoc} môn.\n"
+                break  # Tìm thấy 1 ngành khớp là dừng
+
+        # TRƯỜNG HỢP B: User hỏi về MÔN HỌC (Liên kết bảng HocPhan, DeCuong, DanhGia, HocLieu, ChuanDauRa)
+        for mon in HocPhan.query.all():
+            if mon.ten_hoc_phan.lower() in user_msg_lower or mon.ma_hoc_phan.lower() in user_msg_lower:
+                thong_tin_db += f"\n[THÔNG TIN MÔN HỌC]\n- Môn: {mon.ten_hoc_phan} (Mã: {mon.ma_hoc_phan})\n"
+                thong_tin_db += f"- Số tín chỉ: {mon.so_tin_chi}\n"
+
+                # Tìm Đề cương chi tiết
+                de_cuong = DeCuongChiTiet.query.filter_by(hoc_phan_id=mon.id).first()
+                if de_cuong:
+                    # Rút bảng Đánh giá
+                    danh_gia = DanhGiaHocPhan.query.filter_by(de_cuong_id=de_cuong.id).all()
+                    if danh_gia:
+                        thong_tin_db += "- Điểm đánh giá: " + ", ".join(
+                            [f"{dg.thanh_phan} ({int(dg.trong_so * 100)}%)" for dg in danh_gia]) + "\n"
+
+                    # Rút bảng Học liệu
+                    hoc_lieu = HocLieu.query.filter_by(de_cuong_id=de_cuong.id).all()
+                    if hoc_lieu:
+                        thong_tin_db += "- Giáo trình/Tài liệu: " + ", ".join(
+                            [hl.ten_tai_lieu for hl in hoc_lieu]) + "\n"
+
+                    # Rút bảng Chuẩn đầu ra (CLO)
+                    clo = ChuanDauRa.query.filter_by(de_cuong_id=de_cuong.id).all()
+                    if clo:
+                        thong_tin_db += "- Mục tiêu môn học: " + " và ".join([c.mo_ta for c in clo]) + "\n"
+                break  # Tìm thấy 1 môn khớp là dừng
+        dinh_huong = {
+            "web": ["lập trình", "web", "phần mềm", "cơ sở dữ liệu", "hệ thống thông tin"],
+            "cloud": ["mạng", "bảo mật", "hệ điều hành", "đám mây", "an toàn", "nhúng"],
+            "data": ["dữ liệu", "thống kê", "ai", "trí tuệ nhân tạo", "machine", "toán"],
+            "marketing": ["marketing", "thương hiệu", "hành vi", "khách hàng", "pr", "thị trường"]
+        }
+
+        is_career_question = False
+        for nghe, tu_khoa_list in dinh_huong.items():
+            if nghe in user_msg_lower or "lộ trình" in user_msg_lower or "định hướng" in user_msg_lower:
+                is_career_question = True
+                thong_tin_db += f"\n[CÁC MÔN HỌC TRONG TRƯỜNG PHÙ HỢP VỚI NGHỀ NÀY]\n"
+
+                # Quét tất cả môn học, môn nào có tên chứa từ khóa thì gom lại
+                mon_goi_y = []
+                for mon in HocPhan.query.all():
+                    if any(tk in mon.ten_hoc_phan.lower() for tk in tu_khoa_list):
+                        mon_goi_y.append(f"- {mon.ten_hoc_phan} ({mon.so_tin_chi} TC)")
+
+                # Lấy tối đa 10 môn để AI không bị ngợp
+                thong_tin_db += "\n".join(mon_goi_y[:10]) + "\n"
+                break
+
+        for truong in Truong.query.all():
+            if truong.ten_truong.lower() in user_msg_lower and truong.ma_truong != "NEU_BASE":
+                so_khoa_truong_nay = len(truong.khoas)
+                thong_tin_db += f"\n[THÔNG TIN CHI TIẾT TRƯỜNG: {truong.ten_truong}]\n"
+                thong_tin_db += f"- Số lượng Khoa/Viện trực thuộc: {so_khoa_truong_nay}\n"
+
+                # Liệt kê luôn tên các khoa cho AI biết đường mà kể
+                ten_cac_khoa = [k.ten_khoa for k in truong.khoas]
+                thong_tin_db += f"- Danh sách gồm: {', '.join(ten_cac_khoa)}\n"
+                break
+
+        # =================================================================
+        # 3. TIÊM TOÀN BỘ VÀO PROMPT CHO AI XỬ LÝ
+        # =================================================================
+        prompt = f"""
+        Bạn là "NEU Assistant", trợ lý ảo tư vấn học tập của hệ thống NEU Course.
+
+        [DỮ LIỆU TỔNG QUAN]
+        - Trường có {so_truong} khối/trường, {so_khoa} khoa/viện, {so_nganh} ngành đào tạo.
+
+        [DỮ LIỆU CHI TIẾT TRÍCH XUẤT TỪ DATABASE CHÍNH XÁC 100%]
+        Hãy dùng Dữ liệu dưới đây để trả lời. Nếu trống, nghĩa là hệ thống chưa có thông tin chi tiết.
+        {thong_tin_db}
+
+        [QUY TẮC CỐT LÕI]
+        1. Xưng "mình", gọi "bạn". Trả lời thân thiện, năng động.
+        2. NẾU USER HỎI VỀ ĐỊNH HƯỚNG/LỘ TRÌNH (như Web, Cloud, Data...):
+           - Hãy sử dụng CÁC MÔN HỌC TRONG TRƯỜNG ở mục Dữ liệu chi tiết để vẽ ra lộ trình.
+           - Sắp xếp logic theo: Cơ bản -> Chuyên sâu -> Kỹ năng bổ trợ.
+           - KHÔNG tự bịa ra môn học mà trường không dạy. Trình bày dạng danh sách (bullet points) cho dễ nhìn.
+        3. Nếu user hỏi thông tin tra cứu thông thường, trả lời cực kỳ ngắn gọn (2-3 câu).
+        Câu hỏi của sinh viên: {user_message}
+        """
+
+        response = model.generate_content(prompt)
+        reply = response.text.replace('**', '<b>').replace('*', '<br>-')
+
+    except Exception as e:
+        print(f"Lỗi AI: {e}")
+        reply = "Hệ thống AI đang bảo trì. Bạn đợi chút rồi hỏi lại nhé!"
+
+    return jsonify({"reply": reply})
 # ==============================================================
 # ADMIN ROUTES
 # ==============================================================
