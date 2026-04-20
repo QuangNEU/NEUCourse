@@ -1,0 +1,203 @@
+{% extends "base.html" %}
+
+{% block title %}So sánh chương trình đào tạo{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-header { background-color: var(--neu-blue); color: white; padding: 30px 0; margin-bottom: 30px; }
+    .breadcrumb-item + .breadcrumb-item::before { color: rgba(255, 255, 255, 0.6); }
+    .breadcrumb-item a { color: rgba(255, 255, 255, 0.8); text-decoration: none; }
+    .breadcrumb-item.active { color: white; font-weight: bold; }
+    .compare-panel { background: white; border: 1px solid #EEE; border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+    .compare-title { font-weight: 700; color: var(--neu-blue); margin-bottom: 12px; }
+    .table thead th { background-color: var(--neu-blue); color: white; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-2">
+                <li class="breadcrumb-item"><a href="/"><i class="fa-solid fa-home"></i> Trang chủ</a></li>
+                <li class="breadcrumb-item"><a href="/major/{{ major.id }}">{{ major.ten_nganh }}</a></li>
+                <li class="breadcrumb-item active">So sánh chương trình</li>
+            </ol>
+        </nav>
+        <h2 class="fw-bold mb-0">So sánh chương trình đào tạo</h2>
+    </div>
+</div>
+
+<div class="container mb-5">
+    <div class="compare-panel" id="compareFormPanel">
+        <form method="GET" class="row g-3 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label">Chương trình 1</label>
+                <select name="major_left_id" id="leftMajorSelect" class="form-select" required>
+                    {% for item in compare_majors %}
+                    <option value="{{ item.id }}" {% if item.id == left_major.id %}selected{% endif %}>{{ item.ten_nganh }} ({{ item.ma_nganh }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Phiên bản 1</label>
+                <select name="left" id="leftVersionSelect" class="form-select" required>
+                    {% for item in left_versions %}
+                    <option value="{{ item.ma_phien_ban }}" {% if item.id == left_version.id %}selected{% endif %}>{{ item.ma_phien_ban }}{% if item.nam_bat_dau %} - {{ item.nam_bat_dau }}{% endif %}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Chương trình 2</label>
+                <select name="major_right_id" id="rightMajorSelect" class="form-select" required>
+                    {% for item in compare_majors %}
+                    <option value="{{ item.id }}" {% if item.id == right_major.id %}selected{% endif %}>{{ item.ten_nganh }} ({{ item.ma_nganh }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Phiên bản 2</label>
+                <select name="right" id="rightVersionSelect" class="form-select" required>
+                    {% for item in right_versions %}
+                    <option value="{{ item.ma_phien_ban }}" {% if item.id == right_version.id %}selected{% endif %}>{{ item.ma_phien_ban }}{% if item.nam_bat_dau %} - {{ item.nam_bat_dau }}{% endif %}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-12 d-flex gap-2">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fa-solid fa-code-compare me-1"></i> So sánh
+                </button>
+                <a class="btn btn-outline-secondary" href="/major/{{ left_major.id }}?version={{ left_version.ma_phien_ban }}">Quay lại CTĐT</a>
+            </div>
+        </form>
+    </div>
+
+    <div class="row g-3 mb-3">
+        <div class="col-md-4">
+            <div class="compare-panel h-100">
+                <div class="compare-title">Môn trùng nhau</div>
+                <p class="mb-0">{{ common_courses|length }} môn</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="compare-panel h-100">
+                <div class="compare-title">Chỉ có ở {{ left_major.ten_nganh }} - {{ left_version.ma_phien_ban }}</div>
+                <p class="mb-0">{{ left_only_courses|length }} môn</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="compare-panel h-100">
+                <div class="compare-title">Chỉ có ở {{ right_major.ten_nganh }} - {{ right_version.ma_phien_ban }}</div>
+                <p class="mb-0">{{ right_only_courses|length }} môn</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="compare-panel">
+        <h5 class="compare-title">Môn học trùng nhau</h5>
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover mb-0">
+                <thead>
+                    <tr><th>Mã HP</th><th>Tên học phần</th><th>Số tín chỉ</th></tr>
+                </thead>
+                <tbody>
+                    {% if common_courses %}
+                        {% for course in common_courses %}
+                        <tr>
+                            <td>{{ course.ma_hoc_phan }}</td>
+                            <td>{{ course.ten_hoc_phan }}</td>
+                            <td>{{ course.so_tin_chi }}</td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr><td colspan="3" class="text-center text-muted">Không có môn trùng nhau</td></tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-md-6">
+            <div class="compare-panel h-100">
+                <h5 class="compare-title">Môn chỉ có ở {{ left_major.ten_nganh }} - {{ left_version.ma_phien_ban }}</h5>
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover mb-0">
+                        <thead>
+                            <tr><th>Mã HP</th><th>Tên học phần</th><th>Số tín chỉ</th></tr>
+                        </thead>
+                        <tbody>
+                            {% if left_only_courses %}
+                                {% for course in left_only_courses %}
+                                <tr>
+                                    <td>{{ course.ma_hoc_phan }}</td>
+                                    <td>{{ course.ten_hoc_phan }}</td>
+                                    <td>{{ course.so_tin_chi }}</td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr><td colspan="3" class="text-center text-muted">Không có khác biệt</td></tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="compare-panel h-100">
+                <h5 class="compare-title">Môn chỉ có ở {{ right_major.ten_nganh }} - {{ right_version.ma_phien_ban }}</h5>
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover mb-0">
+                        <thead>
+                            <tr><th>Mã HP</th><th>Tên học phần</th><th>Số tín chỉ</th></tr>
+                        </thead>
+                        <tbody>
+                            {% if right_only_courses %}
+                                {% for course in right_only_courses %}
+                                <tr>
+                                    <td>{{ course.ma_hoc_phan }}</td>
+                                    <td>{{ course.ten_hoc_phan }}</td>
+                                    <td>{{ course.so_tin_chi }}</td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr><td colspan="3" class="text-center text-muted">Không có khác biệt</td></tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    async function loadVersionsForMajor(majorId, selectElement, selectedVersion) {
+        const response = await fetch(`/api/major/${majorId}/versions`);
+        const result = await response.json();
+        if (result.status !== 'success') {
+            return;
+        }
+
+        const options = result.data || [];
+        selectElement.innerHTML = options.map(item => {
+            const text = item.nam ? `${item.ma} - ${item.nam}` : item.ma;
+            const selected = item.ma === selectedVersion ? 'selected' : '';
+            return `<option value="${item.ma}" ${selected}>${text}</option>`;
+        }).join('');
+
+        if (selectElement.options.length > 0 && !selectedVersion) {
+            selectElement.selectedIndex = 0;
+        }
+    }
+
+    document.getElementById('leftMajorSelect').addEventListener('change', async function() {
+        await loadVersionsForMajor(this.value, document.getElementById('leftVersionSelect'), null);
+    });
+
+    document.getElementById('rightMajorSelect').addEventListener('change', async function() {
+        await loadVersionsForMajor(this.value, document.getElementById('rightVersionSelect'), null);
+    });
+</script>
+{% endblock %}
