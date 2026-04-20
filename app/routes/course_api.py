@@ -1,5 +1,8 @@
 from flask import Blueprint, jsonify, request, render_template
-from app.models import db, Truong, KhoaVien, NganhHoc, PhienBanCT, HocPhan, KhungChuongTrinh
+from app.models import (
+    db, Truong, KhoaVien, NganhHoc, PhienBanCT, HocPhan, KhungChuongTrinh,
+    DeCuongChiTiet, ChuanDauRa, KeHoachGiangDay, DanhGiaHocPhan, HocLieu
+)
 
 course_bp = Blueprint('course', __name__)
 
