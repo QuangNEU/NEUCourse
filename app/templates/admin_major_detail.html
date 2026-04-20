@@ -376,6 +376,9 @@
                     <button type="button" class="btn-create-version" onclick="openCreateVersionModal()">
                         <i class="fa-solid fa-plus"></i> Tạo Mới
                     </button>
+                    <button type="button" class="btn-create-version" style="background: linear-gradient(135deg, #DC3545 0%, #C82333 100%); box-shadow: 0 2px 6px rgba(220, 53, 69, 0.3);" onclick="deleteCurrentVersion(); ">
+                        <i class="fa-solid fa-trash"></i> Xóa
+                    </button>
                 </div>
             </div>
 
@@ -810,6 +813,47 @@
         .catch(err => {
             console.error('Error:', err);
             alert('Lỗi kết nối: ' + err);
+        });
+    }
+
+    function deleteCurrentVersion() {
+        const versionSelect = document.getElementById('versionSelect');
+        const versionId = versionSelect.value;
+
+        if (!versionId) {
+            alert('Vui lòng chọn phiên bản để xóa');
+            return;
+        }
+
+        const selectedOption = versionSelect.options[versionSelect.selectedIndex];
+        const versionName = selectedOption.textContent;
+
+        if (!confirm(`Bạn có chắc chắn muốn xóa phiên bản "${versionName}"?\n\nHành động này sẽ xóa toàn bộ học phần trong phiên bản này và không thể hoàn tác.`)) {
+            return;
+        }
+
+        fetch(`/api/admin/versions/${versionId}`, {
+            method: 'DELETE',
+            headers: {'Content-Type': 'application/json'}
+        })
+        .then(r => {
+            if (!r.ok) {
+                throw new Error(`HTTP error! status: ${r.status}`);
+            }
+            return r.json();
+        })
+        .then(data => {
+            if (data.status === 'success') {
+                alert('Xóa phiên bản thành công!');
+                // Reload to refresh the list
+                window.location.href = `/admin/majors/{{ major.id }}`;
+            } else {
+                alert('Lỗi: ' + (data.error || data.message || 'Không xác định'));
+            }
+        })
+        .catch(err => {
+            console.error('Error deleting version:', err);
+            alert('Lỗi khi xóa phiên bản: ' + err.message);
         });
     }
 
