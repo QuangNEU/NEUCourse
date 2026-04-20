@@ -268,13 +268,13 @@ body {
 
 .dropdown-item {
     transition: all 0.2s;
+    display: flex;
     font-size: 0.9rem !important;
     padding: 8px 16px !important;
     color: var(--text-main) !important;
-    margin-left: 0 !important; /* Resetting the previous margin-left */
-    display: flex;
+     /* Resetting the previous margin-left */
     align-items: center;
-    white-space: normal; /* Allow text wrapping for long names */
+    margin-left: 50px !important;
 }
 
 .dropdown-item:hover {
