@@ -115,5 +115,105 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
     {% block extra_js %}{% endblock %}
+
+<button id="chatbot-toggle" class="btn btn-primary rounded-circle shadow d-flex justify-content-center align-items-center" style="position: fixed; bottom: 30px; right: 30px; width: 60px; height: 60px; z-index: 1050; transition: transform 0.3s;">
+        <i class="fa-solid fa-robot fa-xl"></i>
+    </button>
+
+    <div id="chatbot-window" class="card shadow-lg border-0" style="display: none; position: fixed; bottom: 100px; right: 30px; width: 350px; height: 500px; z-index: 1050; border-radius: 15px; overflow: hidden; flex-direction: column;">
+
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center p-3">
+            <h6 class="mb-0 fw-bold"><i class="fa-solid fa-robot me-2"></i> NEU Assistant AI</h6>
+            <button id="chatbot-close" class="btn-close btn-close-white" aria-label="Close"></button>
+        </div>
+
+        <div class="card-body" id="chatbot-messages" style="flex: 1; overflow-y: auto; background-color: #f0f2f5; padding: 15px;">
+            <div class="d-flex mb-3">
+                <div class="bg-white border rounded p-2 text-dark shadow-sm" style="max-width: 85%; font-size: 0.9rem;">
+                    Xin chào! 👋 Tôi là trợ lý ảo của NEU Course. Bạn cần tìm hiểu thông tin về ngành học, môn học hay tín chỉ nào?
+                </div>
+            </div>
+        </div>
+
+        <div class="card-footer bg-white p-2">
+            <div class="input-group">
+                <input type="text" id="chatbot-input" class="form-control" placeholder="Nhập câu hỏi của bạn..." style="font-size: 0.9rem;">
+                <button class="btn btn-primary" id="chatbot-send"><i class="fa-solid fa-paper-plane"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const chatToggle = document.getElementById('chatbot-toggle');
+        const chatWindow = document.getElementById('chatbot-window');
+        const chatClose = document.getElementById('chatbot-close');
+        const chatInput = document.getElementById('chatbot-input');
+        const chatSend = document.getElementById('chatbot-send');
+        const chatMessages = document.getElementById('chatbot-messages');
+
+        // Mở/đóng cửa sổ chat
+        chatToggle.addEventListener('click', () => {
+            chatWindow.style.display = chatWindow.style.display === 'none' ? 'flex' : 'none';
+        });
+        chatClose.addEventListener('click', () => { chatWindow.style.display = 'none'; });
+
+        // Hàm thêm tin nhắn vào khung chat
+        function appendMessage(text, sender) {
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `d-flex mb-3 ${sender === 'user' ? 'justify-content-end' : ''}`;
+
+            const innerDiv = document.createElement('div');
+            innerDiv.className = sender === 'user'
+                ? 'bg-primary text-white rounded p-2 shadow-sm'
+                : 'bg-white border rounded p-2 text-dark shadow-sm';
+            innerDiv.style.maxWidth = '85%';
+            innerDiv.style.fontSize = '0.9rem';
+            innerDiv.innerHTML = text;
+
+            msgDiv.appendChild(innerDiv);
+            chatMessages.appendChild(msgDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight; // Tự động cuộn xuống dưới cùng
+        }
+
+        // Xử lý gửi tin nhắn
+        async function sendMessage() {
+            const message = chatInput.value.trim();
+            if (!message) return;
+
+            // 1. Hiển thị tin nhắn của user
+            appendMessage(message, 'user');
+            chatInput.value = '';
+
+            // 2. Hiển thị thông báo "Bot đang gõ..."
+            const loadingId = 'loading-' + Date.now();
+            appendMessage('<i class="fa-solid fa-ellipsis fa-fade"></i>', 'bot');
+            chatMessages.lastChild.id = loadingId;
+
+            try {
+                // 3. Gọi API Backend (Ta sẽ làm ở Bước 2)
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: message })
+                });
+
+                const data = await response.json();
+
+                // 4. Xóa "Bot đang gõ..." và hiện câu trả lời thật
+                document.getElementById(loadingId).remove();
+                appendMessage(data.reply, 'bot');
+
+            } catch (error) {
+                document.getElementById(loadingId).remove();
+                appendMessage('<span class="text-danger">Lỗi kết nối máy chủ. Vui lòng thử lại sau!</span>', 'bot');
+            }
+        }
+
+        // Gắn sự kiện nút Gửi và phím Enter
+        chatSend.addEventListener('click', sendMessage);
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMessage();
+        });
+    </script>
 </body>
 </html>
