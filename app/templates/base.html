@@ -27,9 +27,41 @@
 
                 <!-- Top Menu (Counts) -->
                 <div class="d-none d-md-flex align-items-center mx-auto">
-                    <a href="#" class="top-menu-item">Chương trình đào tạo <span class="badge rounded-pill">120</span></a>
-                    <a href="#" class="top-menu-item">Khoa/Viện <span class="badge rounded-pill">35</span></a>
-                    <a href="#" class="top-menu-item">Trường <span class="badge rounded-pill">5</span></a>
+                    <!-- Chương trình đào tạo -->
+                    <div class="nav-item dropdown mx-1">
+                        <a href="#" class="top-menu-item dropdown-toggle" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            Chương trình đào tạo <span class="badge rounded-pill">{{ nav_majors|length }}</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-scrollable">
+                            {% for major in nav_majors %}
+                                <li><a class="dropdown-item" href="{{ url_for('course.major_detail', id=major.id) }}">{{ major.ten_nganh }}</a></li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+
+                    <!-- Khoa/Viện -->
+                    <div class="nav-item dropdown mx-1">
+                        <a href="#" class="top-menu-item dropdown-toggle" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            Khoa/Viện <span class="badge rounded-pill">{{ nav_faculties|length }}</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-scrollable">
+                            {% for faculty in nav_faculties %}
+                                <li><a class="dropdown-item" href="{{ url_for('course.faculty_detail', id=faculty.id) }}">{{ faculty.ten_khoa }}</a></li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+
+                    <!-- Trường -->
+                    <div class="nav-item dropdown mx-1">
+                        <a href="#" class="top-menu-item dropdown-toggle" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            Trường <span class="badge rounded-pill">{{ nav_schools|length }}</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-scrollable">
+                            {% for school in nav_schools %}
+                                <li><a class="dropdown-item" href="{{ url_for('course.school_detail', id=school.id) }}">{{ school.ten_truong }}</a></li>
+                            {% endfor %}
+                        </ul>
+                    </div>
                 </div>
 
                 <!-- Right Action Icons -->

@@ -48,6 +48,20 @@ def logout():
 
 
 # ==============================================================
+# CONTEXT PROCESSORS
+# ==============================================================
+
+@course_bp.app_context_processor
+def inject_navbar_data():
+    """Cung cấp dữ liệu cho navbar trên tất cả các trang"""
+    return dict(
+        nav_schools=Truong.query.order_by(Truong.ten_truong.asc()).all(),
+        nav_faculties=KhoaVien.query.order_by(KhoaVien.ten_khoa.asc()).all(),
+        nav_majors=NganhHoc.query.order_by(NganhHoc.ten_nganh.asc()).all()
+    )
+
+
+# ==============================================================
 # MAIN ROUTES
 # ==============================================================
 
