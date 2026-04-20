@@ -47,6 +47,8 @@ class KhungChuongTrinh(db.Model):
     hoc_ky_du_kien = db.Column(db.Integer)
     loai_mon = db.Column(db.String(50))  # Bắt buộc / Tự chọn
 
+    hoc_phan = db.relationship('HocPhan', backref='khung_chuong_trinhs', lazy=True)
+
 
 # 3. HỌC PHẦN VÀ ĐỀ CƯƠNG CHI TIẾT
 class HocPhan(db.Model):
